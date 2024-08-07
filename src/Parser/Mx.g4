@@ -2,23 +2,23 @@ grammar Mx;
 
 // Program
 
-program: (funcDef | varDef | classDef)* (mainDef suite)(funcDef | varDef | classDef)*;
+program: (funcDef | varDef | classDef)* EOF;
 
-mainDef: 'int main()';
+// mainDef: 'int main()';
 
-BuildInFunc:
-	'print'
-	| 'println'
-	| 'printInt'
-	| 'printlnInt'
-	| 'getString'
-	| 'getInt'
-	| 'toString'
-  | 'length'
-  | 'substring'
-  | 'parseInt'
-  | 'ord'
-;
+// BuildInFunc:
+// 	'print'
+// 	| 'println'
+// 	| 'printInt'
+// 	| 'printlnInt'
+// 	| 'getString'
+// 	| 'getInt'
+// 	| 'toString'
+//   | 'length'
+//   | 'substring'
+//   | 'parseInt'
+//   | 'ord'
+// ;
 
 If: 'if';
 Else: 'else';
@@ -33,8 +33,8 @@ Class: 'class';
 
 Null: 'null';
 
-fragment True: 'true';
-fragment False: 'false';
+True: 'true';
+False: 'false';
 
 This: 'this';
 
@@ -58,6 +58,12 @@ LineComment: '//' ~[\r\n]* -> skip;
 
 Semi: ';';
 
+ArrayConst: '{' (Const(',' Const)*)? '}';
+
+Type:  BasicType | Array;
+
+Array: (BasicType | Classname) '[]'('[]')*;
+
 fragment Void: 'void';
 fragment Bool: 'bool';
 fragment Int: 'int';
@@ -72,38 +78,18 @@ Identifier:
   }
 };
 
-type:  BasicType | Array | Classname;
-
-Array: (BasicType | Classname) '[]'('[]')*;
-
 Classname: Identifier;
-
-// Variable
-
-varDef: type Identifier ('=' expression)?(',' Identifier ('=' expression)?)* ';';
-
-// Constant
 
 Const: True | False | DemicalConst | StringConst | Null | ArrayConst;
 
-// DemicalConstant
-
-fragment DemicalConst: 
+DemicalConst: 
   PositiveConst
   |'0'
 ;
 
-PositiveConst: [1-9][0-9]*;
+fragment PositiveConst: [1-9][0-9]*;
 
-// Array
-
-ArrayConst: '{' (Const(',' Const)*)? '}';
-
-arrayInitialize: ((type '[]' '=' ArrayConst) | (type '[' Const ']'));
-
-arrayVisit: (Identifier | Const | This | funcCall | newexp) '[' expression ']'('[' expression ']')*;
-
-// StringImmidate
+varDef: (Type  | Classname) Identifier ('=' expression)?(',' Identifier ('=' expression)?)* ';';
 
 StringConst: '"' (Printable | EscapeChar)* '"' {
   if (getText().length() > 257) {
@@ -111,9 +97,7 @@ StringConst: '"' (Printable | EscapeChar)* '"' {
   }
 };
 
-EscapeChar: '\\\\' | '\\n' | '\\"';
-
-parameterList: (type Identifier (',' type Identifier)*)?;
+fragment EscapeChar: '\\\\' | '\\n' | '\\"';
 
 expression :
   primary
@@ -121,7 +105,7 @@ expression :
   | ('!' | '~') expression
   | expression ('++' | '--')
   | ('++' | '--') expression
-	| ('+' | '-') expression
+	| ('-') expression
   | expression ('*' | '/' | '%') expression
   | expression ('+' | '-') expression
 	| expression ('>>' | '<<') expression
@@ -134,18 +118,23 @@ expression :
 	| expression ('||') expression
   | expression ('?') expression (':') expression
 	| expression ('=') expression
+  | suffix
   | fstring
 ;
 
-primary: Const | Identifier | This | funcCall | memberVisit | arrayVisit | newexp;
+primary: Const | Identifier | This | newexp;
 
-memberVisit: Identifier '.' (funcCall | Identifier);
+suffix: primary ('.' expression | '[' expression ']' | ('('(expression(',' expression)*)')' | '()'))*;
 
-funcDef: type Identifier '(' parameterList ')' suite;
+// memberVisit: (Identifier | funcCall) '.' (funcCall | Identifier);
 
-funcCall: (Identifier | BuildInFunc) ('(' argumentList? ')' | '()');
+funcDef: (Type | Classname) Identifier ('(' ((Type | Classname) Identifier (',' (Type | Classname) Identifier)*) ')' | '()') suite;
 
-argumentList: expression(',' expression)*;
+// funcCall: (Identifier | BuildInFunc) ('(' (expression(',' expression)*)? ')' | '()');
+
+arrayInitialize: (((Type  | Classname) ('[]')('[]')* '=' ArrayConst) | ((Type  | Classname) ('[' expression ']' | '[]')('[' expression']' | '[]')*));
+
+classInitialize: (Type | Classname) '()';
 
 newexp: 'new' (arrayInitialize | classInitialize);
 
@@ -161,13 +150,11 @@ FstringTail: '$' (FPrintable | EscapeChar)*? '"';
 
 suite: '{' statement* '}';
 
-condition: If '(' expression ')' trueStmt = statement (Else falseStmt = statement)?;
+condition: If '(' conditionExp = expression ')' trueStmt = statement (Else falseStmt = statement)?;
 
-whileStmt: While '(' expression ')' statement;
+whileStmt: While '(' conditionExp = expression ')' Stmt = statement;
 
-forStmt: For '(' (expression)? ';' (expression)? ';' (expression)? ')' statement;
-
-loop: whileStmt | forStmt;
+forStmt: For '(' (conditionEpx = expression)? ';' (expression)? ';' (expression)? ')' statement;
 
 breakStmt: Break;
 
@@ -175,14 +162,15 @@ continueStmt: Continue;
 
 returnStmt: Return expression;
 
-jump: breakStmt | continueStmt | returnStmt;
-
 statement :
   suite
-  | condition
-  | jump
-  | loop
   | varDef
+  | condition
+  | breakStmt
+  | continueStmt
+  | returnStmt
+  | whileStmt
+  | forStmt
   | classDef
   | expression ';'
   | ';'
@@ -201,8 +189,6 @@ memberVarDef: varDef;
 memberFuncDef: funcDef;
 
 constructFuncDef: Identifier '()' suite;
-
-classInitialize: type '()';
 
 fragment Printable:~[\\"\r\n];
 
