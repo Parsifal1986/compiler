@@ -1,5 +1,4 @@
 grammar Mx;
-
 // Program
 
 program: (funcDef | varDef | classDef)* EOF;
@@ -41,6 +40,30 @@ This: 'this';
 For: 'for';
 While: 'while';
 
+Inc: '++';
+Dec: '--';
+Plus: '+';
+Minus: '-';
+Multi: '*';
+Div: '/';
+Mod: '%';
+Less: '<';
+Greater: '>';
+LessEqual: '<=';
+GreaterEqual: '>=';
+Equal: '==';
+NotEqual: '!=';
+And: '&&';
+Or: '||';
+Not: '!';
+BitNot: '~';
+BitAnd: '&';
+BitOr: '|';
+BitXor: '^';
+LeftShift: '<<';
+RightShift: '>>';
+Dot: '.';
+
 LeftParen: '(';
 RightParen: ')';
 LeftBracket: '[';
@@ -58,18 +81,16 @@ LineComment: '//' ~[\r\n]* -> skip;
 
 Semi: ';';
 
-ArrayConst: '{' (Const(',' Const)*)? '}';
-
-Type:  BasicType | Array;
+type:  BasicType | Array | Classname;
 
 Array: (BasicType | Classname) '[]'('[]')*;
 
-fragment Void: 'void';
-fragment Bool: 'bool';
-fragment Int: 'int';
-fragment String: 'string';
-
 BasicType: Void | Bool | Int | String;
+
+Void: 'void';
+Bool: 'bool';
+Int: 'int';
+String: 'string';
 
 Identifier:
 	[a-zA-Z][a-zA-Z_0-9]* {
@@ -80,7 +101,9 @@ Identifier:
 
 Classname: Identifier;
 
-Const: True | False | DemicalConst | StringConst | Null | ArrayConst;
+constType: True | False | DemicalConst | StringConst | Null | arrayConst;
+
+arrayConst: '{' (constType(',' constType)*)? '}';
 
 DemicalConst: 
   PositiveConst
@@ -89,7 +112,7 @@ DemicalConst:
 
 fragment PositiveConst: [1-9][0-9]*;
 
-varDef: (Type  | Classname) Identifier ('=' expression)?(',' Identifier ('=' expression)?)* ';';
+varDef: type Identifier ('=' expression)?(',' Identifier ('=' expression)?)* ';';
 
 StringConst: '"' (Printable | EscapeChar)* '"' {
   if (getText().length() > 257) {
@@ -100,93 +123,89 @@ StringConst: '"' (Printable | EscapeChar)* '"' {
 fragment EscapeChar: '\\\\' | '\\n' | '\\"';
 
 expression :
-  primary
-  | '('expression')'
-  | ('!' | '~') expression
-  | expression ('++' | '--')
-  | ('++' | '--') expression
-	| ('-') expression
-  | expression ('*' | '/' | '%') expression
-  | expression ('+' | '-') expression
-	| expression ('>>' | '<<') expression
-	| expression ('>' | '<' | '>=' | '<=') expression
-	| expression ('!=' | '==') expression
-	| expression ('&') expression
-  | expression ('^') expression
-  | expression ('|') expression
-  | expression ('&&') expression
-	| expression ('||') expression
-  | expression ('?') expression (':') expression
-	| expression ('=') expression
-  | suffix
-  | fstring
+  primary                                             # primaryExp
+  | suffix                                            # suffixExp
+  |'('expression')'                                   # parenExp
+	| <assoc = right> ('!' | '~') expression            # unaryExp
+	| <assoc = right> expression Suf = ('++' | '--')   # unaryExp
+	| <assoc = right> Pre = ('++' | '--') expression    # unaryExp
+	| <assoc = right> ('-') expression                  # unaryExp
+  | expression ('*' | '/' | '%') expression           # binaryExp
+  | expression ('+' | '-') expression                 # binaryExp
+	| expression ('>>' | '<<') expression               # binaryExp
+	| expression ('>' | '<' | '>=' | '<=') expression   # binaryExp
+	| expression ('!=' | '==') expression               # binaryExp
+	| expression ('&') expression                       # binaryExp
+  | expression ('^') expression                       # binaryExp
+  | expression ('|') expression                       # binaryExp
+  | expression ('&&') expression                      # binaryExp
+	| expression ('||') expression                      # binaryExp
+	| <assoc = right> expression ('?') expression (':') expression                      #ternaryExp
+	| <assoc = right> expression ('=') expression       # assignExp
+  | fstring                                           # fstringExp
 ;
 
-primary: Const | Identifier | This | newexp;
+primary: Identifier | constType | This | newexp;
 
-suffix: primary ('.' expression | '[' expression ']' | ('('(expression(',' expression)*)')' | '()'))*;
+suffix: primary suffixcontent*;
+
+suffixcontent: ('.' Identifier | '[' expression ']' | ('('(expression(',' expression)*)')' | '()'));
 
 // memberVisit: (Identifier | funcCall) '.' (funcCall | Identifier);
 
-funcDef: (Type | Classname) Identifier ('(' ((Type | Classname) Identifier (',' (Type | Classname) Identifier)*) ')' | '()') suite;
+funcDef: retType = type funcName = Identifier ('(' (type Identifier (',' type Identifier)*) ')' | '()') suite;
 
 // funcCall: (Identifier | BuildInFunc) ('(' (expression(',' expression)*)? ')' | '()');
 
-arrayInitialize: (((Type  | Classname) ('[]')('[]')* '=' ArrayConst) | ((Type  | Classname) ('[' expression ']' | '[]')('[' expression']' | '[]')*));
+arrayInitialize: ((type '=' arrayConst) | (type ('[' expression ']' | '[]')('[' expression']' | '[]')*));
 
-classInitialize: (Type | Classname) '()';
+classInitialize: Identifier '()';
 
 newexp: 'new' (arrayInitialize | classInitialize);
 
 fstring: FstringHead expression (FstringBody expression)* FstringTail;
 
-FstringHead: 'f"' (FPrintable | EscapeChar)* '$';
+FstringHead: 'f"' Fstring '$';
 
-FstringBody: '$' (FPrintable | EscapeChar) '$';
+FstringBody: '$' Fstring '$';
 
-FstringTail: '$' (FPrintable | EscapeChar)*? '"';
+FstringTail: '$' Fstring '"';
 
-// Statement
+fragment Fstring: (FPrintable | EscapeChar)*;
+
+	// Statement
 
 suite: '{' statement* '}';
 
 condition: If '(' conditionExp = expression ')' trueStmt = statement (Else falseStmt = statement)?;
 
-whileStmt: While '(' conditionExp = expression ')' Stmt = statement;
+whileRule: While '(' conditionExp = expression ')' Stmt = statement;
 
-forStmt: For '(' (conditionEpx = expression)? ';' (expression)? ';' (expression)? ')' statement;
+forRule: For '(' (initExpr = expression)? ';' (condExpr = expression)? ';' (stepExpr = expression)? ')' statement;
 
-breakStmt: Break;
+breakRule: Break;
 
-continueStmt: Continue;
+continueRule: Continue;
 
-returnStmt: Return expression;
+returnRule: Return expression;
 
 statement :
-  suite
-  | varDef
-  | condition
-  | breakStmt
-  | continueStmt
-  | returnStmt
-  | whileStmt
-  | forStmt
-  | classDef
-  | expression ';'
-  | ';'
+  suite                           # suiteStmt
+  | varDef                        # varDefStmt
+  | condition                     # conditionStmt
+  | breakRule                     # breakStmt
+  | continueRule                  # continueStmt
+  | returnRule                    # returnStmt
+  | whileRule                     # whileStmt
+  | forRule                       # forStmt
+  | classDef                      # classDefStmt
+  | expression ';'                # expressionStmt
+  | ';'                           # emptyStmt
 ;
 
 // Class
 
-classDef: Class classname = Identifier classBody;
-
-classBody: '{' member* '}';
-
-member: memberVarDef | funcDef | constructFuncDef;
-
-memberVarDef: varDef;
-
-memberFuncDef: funcDef;
+classDef: Class classname = Identifier '{' (varDef | funcDef | constructFuncDef)* '}';
 
 constructFuncDef: Identifier '()' suite;
 
