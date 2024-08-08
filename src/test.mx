@@ -1,0 +1,4 @@
+int main() {
+    PrintLn(f"the value of x + y is $f"$x + y$"$");
+    return 0;
+}
