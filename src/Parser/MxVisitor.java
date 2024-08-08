@@ -23,6 +23,12 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitType(MxParser.TypeContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MxParser#array}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArray(MxParser.ArrayContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MxParser#constType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -40,6 +46,12 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitVarDef(MxParser.VarDefContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MxParser#assign}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAssign(MxParser.AssignContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code binaryExp}
 	 * labeled alternative in {@link MxParser#expression}.
@@ -201,6 +213,13 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitVarDefStmt(MxParser.VarDefStmtContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code classDefStmt}
+	 * labeled alternative in {@link MxParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitClassDefStmt(MxParser.ClassDefStmtContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code conditionStmt}
 	 * labeled alternative in {@link MxParser#statement}.
 	 * @param ctx the parse tree
@@ -242,13 +261,6 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitForStmt(MxParser.ForStmtContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code classDefStmt}
-	 * labeled alternative in {@link MxParser#statement}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitClassDefStmt(MxParser.ClassDefStmtContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code expressionStmt}
 	 * labeled alternative in {@link MxParser#statement}.

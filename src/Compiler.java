@@ -5,8 +5,10 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import AST.Other.RootNode;
 import Parser.MxLexer;
 import Parser.MxParser;
+import Sema.ASTBuilder;
 import Tools.MxErrorListener;
 
 public class Compiler {
@@ -20,5 +22,7 @@ public class Compiler {
     parser.removeErrorListeners();
     parser.addErrorListener(new MxErrorListener());
     ParseTree parseTreeRoot = parser.program();
+    ASTBuilder astBuilder = new ASTBuilder();
+    RootNode ASTRoot = (RootNode) astBuilder.visit(parseTreeRoot);
   }
 }

@@ -58,7 +58,7 @@ public class Type {
   
   public Type(String type) {
     this.dim = (int) type.chars().filter(ch -> ch == '[').count();
-    this.typename = type.replaceAll("[[]]", "");
+    this.typename = type.replaceAll("[\\[\\]]", "");
   }
 
   public String getTypename() {

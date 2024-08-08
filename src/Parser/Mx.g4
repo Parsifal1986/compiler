@@ -81,9 +81,9 @@ LineComment: '//' ~[\r\n]* -> skip;
 
 Semi: ';';
 
-type:  BasicType | Array | Classname;
+type:  array | BasicType | Identifier;
 
-Array: (BasicType | Classname) '[]'('[]')*;
+array: (BasicType | Identifier) '[' ']'('[' ']')*;
 
 BasicType: Void | Bool | Int | String;
 
@@ -99,8 +99,6 @@ Identifier:
   }
 };
 
-Classname: Identifier;
-
 constType: True | False | DemicalConst | StringConst | Null | arrayConst;
 
 arrayConst: '{' (constType(',' constType)*)? '}';
@@ -112,7 +110,9 @@ DemicalConst:
 
 fragment PositiveConst: [1-9][0-9]*;
 
-varDef: type Identifier ('=' expression)?(',' Identifier ('=' expression)?)* ';';
+varDef: type assign(',' assign)* ';';
+
+assign: Identifier ('=' expression)?;
 
 StringConst: '"' (Printable | EscapeChar)* '"' {
   if (getText().length() > 257) {
@@ -149,17 +149,17 @@ primary: Identifier | constType | This | newexp;
 
 suffix: primary suffixcontent*;
 
-suffixcontent: ('.' Identifier | '[' expression ']' | ('('(expression(',' expression)*)')' | '()'));
+suffixcontent: ('.' Identifier | '[' expression ']' | ('('(expression(',' expression)*)')' | '('')'));
 
 // memberVisit: (Identifier | funcCall) '.' (funcCall | Identifier);
 
-funcDef: retType = type funcName = Identifier ('(' (type Identifier (',' type Identifier)*) ')' | '()') suite;
+funcDef: retType = type funcName = Identifier ('(' (type Identifier (',' type Identifier)*) ')' | '('')') suite;
 
 // funcCall: (Identifier | BuildInFunc) ('(' (expression(',' expression)*)? ')' | '()');
 
-arrayInitialize: ((type '=' arrayConst) | (type ('[' expression ']' | '[]')('[' expression']' | '[]')*));
+arrayInitialize: ((type '=' arrayConst) | (type ('[' expression ']' | '['']')('[' expression']' | '['']')*));
 
-classInitialize: Identifier '()';
+classInitialize: Identifier '('')';
 
 newexp: 'new' (arrayInitialize | classInitialize);
 
@@ -192,22 +192,22 @@ returnRule: Return expression;
 statement :
   suite                           # suiteStmt
   | varDef                        # varDefStmt
+  | classDef                      # classDefStmt
   | condition                     # conditionStmt
   | breakRule                     # breakStmt
   | continueRule                  # continueStmt
   | returnRule                    # returnStmt
   | whileRule                     # whileStmt
   | forRule                       # forStmt
-  | classDef                      # classDefStmt
   | expression ';'                # expressionStmt
   | ';'                           # emptyStmt
 ;
 
 // Class
 
-classDef: Class classname = Identifier '{' (varDef | funcDef | constructFuncDef)* '}';
+classDef: Class classname = Identifier '{' (varDef | funcDef | constructFuncDef)* '}'';';
 
-constructFuncDef: Identifier '()' suite;
+constructFuncDef: Identifier '('')' suite;
 
 fragment Printable:~[\\"\r\n];
 

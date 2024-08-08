@@ -1,39 +1,43 @@
 package Sema;
 
 import AST.ASTNode;
-import AST.ArrayConstExprNode;
-import AST.ArrayInitializeNode;
-import AST.AssignExprNode;
-import AST.BinaryExprNode;
-import AST.BlockStmtNode;
-import AST.BreakStmtNode;
-import AST.ClassDefStmtNode;
-import AST.ClassInitializeNode;
-import AST.ConditionStmtNode;
-import AST.ConstExprNode;
-import AST.ConstructFuncDefStmtNode;
-import AST.ExprNode;
-import AST.ExprStmtNode;
-import AST.ForStmtNode;
-import AST.FstringExprNode;
-import AST.FuncDefStmtNode;
-import AST.IdentifierExprNode;
-import AST.NewExprNode;
-import AST.PrimeExprNode;
-import AST.ReturnStmtNode;
-import AST.RootNode;
-import AST.StmtNode;
-import AST.SuffixContentNode;
-import AST.SuffixExprNode;
-import AST.TernaryExprNode;
-import AST.ThisExprNode;
-import AST.TypeNode;
-import AST.UnaryExprNode;
-import AST.VarDefStmtNode;
-import AST.WhileStmtNode;
+import AST.Expr.ArrayConstExprNode;
+import AST.Expr.AssignExprNode;
+import AST.Expr.BinaryExprNode;
+import AST.Expr.ConstExprNode;
+import AST.Expr.ExprNode;
+import AST.Expr.FstringExprNode;
+import AST.Expr.IdentifierExprNode;
+import AST.Expr.NewExprNode;
+import AST.Expr.PrimeExprNode;
+import AST.Expr.SuffixExprNode;
+import AST.Expr.TernaryExprNode;
+import AST.Expr.ThisExprNode;
+import AST.Expr.UnaryExprNode;
+import AST.Other.ArrayInitializeNode;
+import AST.Other.ArrayNode;
+import AST.Other.ClassInitializeNode;
+import AST.Other.InitNode;
+import AST.Other.RootNode;
+import AST.Other.SuffixContentNode;
+import AST.Other.TypeNode;
+import AST.Stmt.BlockStmtNode;
+import AST.Stmt.BreakStmtNode;
+import AST.Stmt.ClassDefStmtNode;
+import AST.Stmt.ConditionStmtNode;
+import AST.Stmt.ConstructFuncDefStmtNode;
+import AST.Stmt.ExprStmtNode;
+import AST.Stmt.ForStmtNode;
+import AST.Stmt.FuncDefStmtNode;
+import AST.Stmt.ReturnStmtNode;
+import AST.Stmt.StmtNode;
+import AST.Stmt.VarDefStmtNode;
+import AST.Stmt.WhileStmtNode;
 import Parser.MxBaseVisitor;
 import Parser.MxParser.ArrayConstContext;
+import Parser.MxParser.ArrayContext;
 import Parser.MxParser.ArrayInitializeContext;
+import Parser.MxParser.AssignContext;
 import Parser.MxParser.AssignExpContext;
 import Parser.MxParser.BinaryExpContext;
 import Parser.MxParser.BreakRuleContext;
@@ -90,7 +94,6 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
       varDef -> root.AddVarDef((VarDefStmtNode) visit(varDef))
     );
 
-
     return root;
   }
 
@@ -108,15 +111,24 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     return funcDef;
   }
 
-  
+  @Override
+  public ASTNode visitArray(ArrayContext ctx) {
+    return new ArrayNode(new Position(ctx), ctx.getText());
+  }
 
   @Override
   public ASTNode visitVarDef(VarDefContext ctx) {
     VarDefStmtNode varDef = new VarDefStmtNode(new Position(ctx));
     varDef.type = ((TypeNode) visit(ctx.type())).type;
-    varDef.name = ctx.Identifier(0).getText();
-    varDef.init = (ExprNode) visit(ctx.expression(0));
+    ctx.assign().forEach(
+      init -> varDef.AddInit((InitNode) visit(init))
+    );
     return varDef;
+  }
+
+  @Override
+  public ASTNode visitAssign(AssignContext ctx) {
+    return new InitNode(new Position(ctx), ctx.Identifier().getText(), (ctx.expression() != null ? (ExprNode) visit(ctx.expression()) : null));
   }
 
   @Override
@@ -158,7 +170,13 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
   public ASTNode visitClassDef(ClassDefContext ctx) {
     ClassDefStmtNode classDef = new ClassDefStmtNode(new Position(ctx));
     classDef.classname = ctx.classname.getText();
-    classDef.constructfuncdef = ctx.constructFuncDef() == null ? null : (ConstructFuncDefStmtNode) visit(ctx.constructFuncDef(0));
+    if (ctx.constructFuncDef().size() > 0) {
+      if (ctx.constructFuncDef().size() > 1) {
+        throw new RuntimeException("Multiple construct function definition");
+      } else {
+        classDef.constructfuncdef = (ConstructFuncDefStmtNode) visit(ctx.constructFuncDef(0));
+      }
+    }
     ctx.varDef().forEach(
       varDef -> classDef.AddVarDef((VarDefStmtNode) visit(varDef))
     );
@@ -454,7 +472,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
       suffixContent.add((ExprNode) visit(ctx.expression(0)));
     } else if (ctx.LeftParen() != null) {
       suffixContent.type = SuffixContentNode.SuffixType.FUNCC;
-      if (ctx.expression() != null) {
+      if (ctx.expression().size() > 0) {
         ctx.expression().forEach(
           expression -> suffixContent.add((ExprNode) visit(expression))
         );
