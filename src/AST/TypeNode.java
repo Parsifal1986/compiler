@@ -1,13 +1,14 @@
 package AST;
 
+import Tools.Type;
 import Tools.Position;
 
-public class ExprStmtNode extends StmtNode {
-  public ExprNode expr;
+public class TypeNode extends ASTNode {
+  public Type type;
 
-  public ExprStmtNode(Position pos, ExprNode expr) {
+  public TypeNode(Position pos, Type type) {
     super(pos);
-    this.expr = expr;
+    this.type = type;
   }
 
   @Override

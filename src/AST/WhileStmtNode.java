@@ -2,8 +2,11 @@ package AST;
 
 import Tools.Position;
 
-public class JumpStmtNode extends StmtNode {
-  public JumpStmtNode(Position pos) {
+public class WhileStmtNode extends StmtNode {
+  public ExprNode condition;
+  public StmtNode stmt;
+  
+  public WhileStmtNode(Position pos) {
     super(pos);
   }
 

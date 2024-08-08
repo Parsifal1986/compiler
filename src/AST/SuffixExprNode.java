@@ -1,11 +1,12 @@
 package AST;
 
+import java.util.ArrayList;
+
 import Tools.Position;
 
 public class SuffixExprNode extends ExprNode {
-  PrimeExprNode primeExpr;
-  SuffixType type;
-  ExprNode expr;
+  public PrimeExprNode primeExpr;
+  public ArrayList<SuffixContentNode> suffixContent;
 
   public SuffixExprNode(Position pos) {
     super(pos);
@@ -15,7 +16,7 @@ public class SuffixExprNode extends ExprNode {
     visitor.visit(this);
   }
 
-  public enum SuffixType {
-    ARRV, FUNCC, MEMBERV;
+  public void AddSuffix(SuffixContentNode suffixContentNode) {
+    this.suffixContent.add(suffixContentNode);
   }
 }

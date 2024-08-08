@@ -3,8 +3,8 @@ package AST;
 import Tools.Position;
 
 public class BinaryExprNode extends ExprNode {
-  ExprNode lhs, rhs;
-  Opcode op;
+  public ExprNode lhs, rhs;
+  public Opcode op;
 
   public BinaryExprNode(Position pos) {
     super(pos);

@@ -3,7 +3,8 @@ package AST;
 import Tools.Position;
 
 public class AssignExprNode extends ExprNode {
-  ExprNode lhs, rhs;
+  public ExprNode lhs;
+  public ExprNode rhs;
 
   public AssignExprNode(Position pos) {
     super(pos);

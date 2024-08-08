@@ -2,10 +2,10 @@ package AST;
 
 import Tools.Position;
 
-public class ExprStmtNode extends StmtNode {
-  public ExprNode expr;
+public class ReturnStmtNode extends StmtNode {
+  ExprNode expr;
 
-  public ExprStmtNode(Position pos, ExprNode expr) {
+  public ReturnStmtNode(Position pos, ExprNode expr) {
     super(pos);
     this.expr = expr;
   }
@@ -14,5 +14,4 @@ public class ExprStmtNode extends StmtNode {
   public void accept(ASTVisitor visitor) {
     visitor.visit(this);
   }
-  
 }
