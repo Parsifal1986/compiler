@@ -6,8 +6,8 @@ import AST.ASTVisitor;
 import Tools.Position;
 
 public class FstringExprNode extends ExprNode {
-  ArrayList<String> strings;
-  ArrayList<ExprNode> exprs;
+  public ArrayList<String> strings;
+  public ArrayList<ExprNode> exprs;
 
   public FstringExprNode(Position pos) {
     super(pos);
