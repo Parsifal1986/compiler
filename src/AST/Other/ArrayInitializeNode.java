@@ -11,8 +11,8 @@ import Tools.Type;
 
 public class ArrayInitializeNode extends ASTNode {
   public Type type;
-  ArrayConstExprNode expr;
-  ArrayList<ExprNode> size;
+  public ArrayConstExprNode expr;
+  public ArrayList<ExprNode> size;
 
   public ArrayInitializeNode(Position pos) {
     super(pos);

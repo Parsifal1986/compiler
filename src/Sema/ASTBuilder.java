@@ -79,20 +79,45 @@ import Parser.MxParser.WhileRuleContext;
 import Parser.MxParser.WhileStmtContext;
 import Tools.Position;
 import Tools.Type;
+import Tools.globalscope;
+import Tools.error.SyntaxError;
 
 public class ASTBuilder extends MxBaseVisitor<ASTNode> {
+  private globalscope gscope;
+
+  public ASTBuilder(globalscope gscope) {
+    this.gscope = gscope;
+  }
+
   @Override
   public ASTNode visitProgram(ProgramContext ctx) {
     RootNode root = new RootNode(new Position(ctx));
-    ctx.funcDef().forEach(
-      funcDef -> root.AddFuncDef((FuncDefStmtNode) visit(funcDef))
-    );
-    ctx.classDef().forEach(
-      classDef -> root.AddClassDef((ClassDefStmtNode) visit(classDef))
-    );
-    ctx.varDef().forEach(
-      varDef -> root.AddVarDef((VarDefStmtNode) visit(varDef))
-    );
+    for (FuncDefContext funcDefCtx : ctx.funcDef()) {
+      FuncDefStmtNode funcDef = (FuncDefStmtNode) visit(funcDefCtx);
+      if (gscope.CheckFunction(funcDef.funcName)) {
+        throw new SyntaxError("Function " + funcDef.funcName + " already exists", funcDef.pos);
+      }
+      gscope.AddFunction(funcDef.funcName, null, funcDef.pos);
+      root.AddFuncDef(funcDef);
+    }
+    for (ClassDefContext classDefCtx : ctx.classDef()) {
+      ClassDefStmtNode classDef = (ClassDefStmtNode) visit(classDefCtx);
+      if (gscope.CheckClass(classDef.classname)) {
+        throw new SyntaxError("Class " + classDef.classname + " already exists", classDef.pos);
+      }
+      gscope.AddClass(classDef.classname, null, classDef.pos);
+      root.AddClassDef(classDef);
+    }
+    for (VarDefContext varDefCtx : ctx.varDef()) {
+      VarDefStmtNode varDef = (VarDefStmtNode) visit(varDefCtx);
+      for (InitNode init : varDef.init) {
+        if (gscope.CheckIdentifier(init.varname)) {
+          throw new SyntaxError("Variable " + init.varname + " already exists", varDef.pos);
+        }
+        gscope.AddIdentifier(init.varname, null, varDef.pos);
+      }
+      root.AddVarDef(varDef);
+    }
 
     return root;
   }
@@ -142,7 +167,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     } else if (ctx.newexp() != null) {
       return visit(ctx.newexp());
     } else {
-      throw new RuntimeException("Unknown primary expression");
+      throw new SyntaxError("Unknown primary expression", new Position(ctx));
     }
   }
 
@@ -172,7 +197,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     classDef.classname = ctx.classname.getText();
     if (ctx.constructFuncDef().size() > 0) {
       if (ctx.constructFuncDef().size() > 1) {
-        throw new RuntimeException("Multiple construct function definition");
+        throw new SyntaxError("Multiple construct function definition", new Position(ctx));
       } else {
         classDef.constructfuncdef = (ConstructFuncDefStmtNode) visit(ctx.constructFuncDef(0));
       }
@@ -256,7 +281,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     } else if (ctx.NotEqual() != null) {
       binaryExpr.op = BinaryExprNode.Opcode.NE;
     } else {
-      throw new RuntimeException("Unknown binary expression");
+      throw new SyntaxError("Unknown binary expression", new Position(ctx));
     }
     return binaryExpr;
   }
@@ -292,7 +317,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         unaryExpr.op = UnaryExprNode.Opcode.SUF_DEC;
       }
     } else {
-      throw new RuntimeException("Unknown unary expression");
+      throw new SyntaxError("Unknown unary expression", new Position(ctx));
     }
     return unaryExpr;
   }

@@ -27,7 +27,7 @@ public class FuncDefStmtNode extends StmtNode {
     visitor.visit(this);
   }
 
-  private static class ParameterList {
+  public static class ParameterList {
     public ParameterList(Type type, String name) {
       this.type = type;
       this.name = name;

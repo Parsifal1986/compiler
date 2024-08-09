@@ -61,6 +61,10 @@ public class Type {
     this.typename = type.replaceAll("[\\[\\]]", "");
   }
 
+  public boolean IsBuildIn() {
+    return typename.equals("int") || typename.equals("bool") || typename.equals("string") || typename.equals("null");
+  }
+
   public String getTypename() {
     return typename;
   }

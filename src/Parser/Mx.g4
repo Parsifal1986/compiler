@@ -127,7 +127,7 @@ expression :
   | suffix                                            # suffixExp
   |'('expression')'                                   # parenExp
 	| <assoc = right> ('!' | '~') expression            # unaryExp
-	| <assoc = right> expression Suf = ('++' | '--')   # unaryExp
+	| <assoc = right> expression Suf = ('++' | '--')    # unaryExp
 	| <assoc = right> Pre = ('++' | '--') expression    # unaryExp
 	| <assoc = right> ('-') expression                  # unaryExp
   | expression ('*' | '/' | '%') expression           # binaryExp
