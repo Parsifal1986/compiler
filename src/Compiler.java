@@ -10,6 +10,7 @@ import Parser.MxLexer;
 import Parser.MxParser;
 import Sema.ASTBuilder;
 import Tools.MxErrorListener;
+import Tools.globalscope;
 
 public class Compiler {
   public static void main(String[] args) throws Exception {
@@ -22,7 +23,8 @@ public class Compiler {
     parser.removeErrorListeners();
     parser.addErrorListener(new MxErrorListener());
     ParseTree parseTreeRoot = parser.program();
-    ASTBuilder astBuilder = new ASTBuilder();
+    globalscope gscope = new globalscope();
+    ASTBuilder astBuilder = new ASTBuilder(gscope);
     RootNode ASTRoot = (RootNode) astBuilder.visit(parseTreeRoot);
   }
 }
