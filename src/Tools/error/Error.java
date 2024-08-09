@@ -2,26 +2,26 @@ package Tools.error;
 
 import Tools.Position;
 
-public class error extends RuntimeException {
+public class Error extends RuntimeException {
   private Position errorLine;
 
-  public error() {
+  public Error() {
         super();
     }
 
-  public error(String message) {
+  public Error(String message) {
         super(message);
     }
 
-  public error(String message, Throwable cause) {
+  public Error(String message, Throwable cause) {
         super(message, cause);
     }
 
-  public error(Throwable cause) {
+  public Error(Throwable cause) {
         super(cause);
     }
 
-  public error(String message, Position errorline) {
+  public Error(String message, Position errorline) {
         super(message);
         this.errorLine = errorline;
     }
