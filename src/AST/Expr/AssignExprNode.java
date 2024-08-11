@@ -9,6 +9,7 @@ public class AssignExprNode extends ExprNode {
 
   public AssignExprNode(Position pos) {
     super(pos);
+    islvalue = false;
   }
 
   public void accept(ASTVisitor visitor) {

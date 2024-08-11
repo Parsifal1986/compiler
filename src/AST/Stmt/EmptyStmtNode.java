@@ -1,15 +1,16 @@
-package AST.Expr;
+package AST.Stmt;
 
 import AST.ASTVisitor;
 import Tools.Position;
 
-public class ThisExprNode extends ExprNode {
-  public ThisExprNode(Position pos) {
+public class EmptyStmtNode extends StmtNode {
+  public EmptyStmtNode(Position pos) {
     super(pos);
-    islvalue = false;
   }
 
+  @Override
   public void accept(ASTVisitor visitor) {
     visitor.visit(this);
   }
+  
 }

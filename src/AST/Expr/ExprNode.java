@@ -6,7 +6,8 @@ import AST.ASTNode;
 import Tools.Entity;
 
 abstract public class ExprNode extends ASTNode {
-  public Type type;
+  public Type exprType;
+  public boolean islvalue = false;
   public Entity val;
 
   public ExprNode(Position pos) {
@@ -15,6 +16,6 @@ abstract public class ExprNode extends ASTNode {
 
   public ExprNode(Position pos, Type type) {
     super(pos);
-    this.type = type;
+    this.exprType = type;
   }
 }

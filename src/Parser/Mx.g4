@@ -1,9 +1,11 @@
 grammar Mx;
 // Program
 
-program: (funcDef | varDef | classDef)* EOF;
+program: declaration* EOF;
 
-// mainDef: 'int main()';
+declaration: funcDef | varDef | classDef;
+
+	// mainDef: 'int main()';
 
 // BuildInFunc:
 // 	'print'
@@ -125,7 +127,6 @@ fragment EscapeChar: '\\\\' | '\\n' | '\\"';
 expression :
   primary                                             # primaryExp
   | suffix                                            # suffixExp
-  |'('expression')'                                   # parenExp
 	| <assoc = right> ('!' | '~') expression            # unaryExp
 	| <assoc = right> expression Suf = ('++' | '--')    # unaryExp
 	| <assoc = right> Pre = ('++' | '--') expression    # unaryExp
@@ -145,7 +146,9 @@ expression :
   | fstring                                           # fstringExp
 ;
 
-primary: Identifier | constType | This | newexp;
+primary: Identifier | constType | This | newexp | parenExp;
+
+parenExp: '(' expression ')';
 
 suffix: primary suffixcontent*;
 
@@ -159,7 +162,7 @@ funcDef: retType = type funcName = Identifier ('(' (type Identifier (',' type Id
 
 arrayInitialize: ((type '=' arrayConst) | (type ('[' expression ']' | '['']')('[' expression']' | '['']')*));
 
-classInitialize: Identifier '('')';
+classInitialize: Identifier ('('')')?;
 
 newexp: 'new' (arrayInitialize | classInitialize);
 
@@ -187,16 +190,16 @@ breakRule: Break;
 
 continueRule: Continue;
 
-returnRule: Return expression;
+returnRule: Return expression?;
 
 statement :
   suite                           # suiteStmt
   | varDef                        # varDefStmt
   | classDef                      # classDefStmt
   | condition                     # conditionStmt
-  | breakRule                     # breakStmt
-  | continueRule                  # continueStmt
-  | returnRule                    # returnStmt
+  | breakRule';'                  # breakStmt
+  | continueRule';'               # continueStmt
+  | returnRule';'                 # returnStmt
   | whileRule                     # whileStmt
   | forRule                       # forStmt
   | expression ';'                # expressionStmt

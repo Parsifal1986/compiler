@@ -1,7 +1,6 @@
 package Tools;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 
 import org.antlr.v4.runtime.Token;
 
@@ -11,11 +10,8 @@ import Parser.MxParser.ConstTypeContext;
 public class Type {
   private String typename;
   private int dim;
-  private static Map<String, Type> types = new HashMap<String,Type>();
-
-  public static Type GetType(String identifer) {
-    return types.get(identifer);
-  }
+  public boolean isfunc = false;
+  public ArrayList<Type> params = null;
 
   public static Type GetType(ConstTypeContext c) {
     if (c.True() != null || c.False() != null) {
@@ -46,6 +42,12 @@ public class Type {
     return new Type(typename, dim);
   }
 
+  public Type(Type t) {
+    this.typename = t.typename;
+    this.dim = t.dim;
+    this.isfunc = t.isfunc;
+  }
+
   public Type(String typename, int dim) {
     this.typename = typename;
     this.dim = dim;
@@ -71,5 +73,21 @@ public class Type {
 
   public int getDim() {
     return dim;
+  }
+
+  public boolean equals(Type t) {
+    if (this.dim != 0 && t.typename == "null") {
+      return true;
+    }
+    if (this.typename == "null" && t.dim != 0) {
+      return true;
+    }
+    if (!IsBuildIn() && t.typename == "null") {
+      return true;
+    }
+    if (typename == "null" && !t.IsBuildIn()) {
+      return true;
+    }
+    return typename.equals(t.typename) && dim == t.dim;
   }
 }

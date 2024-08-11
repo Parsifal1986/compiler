@@ -1,5 +1,7 @@
 package Sema;
 
+import java.util.ArrayList;
+
 import AST.ASTVisitor;
 import AST.Expr.ArrayConstExprNode;
 import AST.Expr.AssignExprNode;
@@ -16,6 +18,7 @@ import AST.Expr.UnaryExprNode;
 import AST.Other.ArrayInitializeNode;
 import AST.Other.ArrayNode;
 import AST.Other.ClassInitializeNode;
+import AST.Other.DeclarationNode;
 import AST.Other.InitNode;
 import AST.Other.RootNode;
 import AST.Other.SuffixContentNode;
@@ -26,6 +29,7 @@ import AST.Stmt.ClassDefStmtNode;
 import AST.Stmt.ConditionStmtNode;
 import AST.Stmt.ConstructFuncDefStmtNode;
 import AST.Stmt.ContinueStmtNode;
+import AST.Stmt.EmptyStmtNode;
 import AST.Stmt.ExprStmtNode;
 import AST.Stmt.ForStmtNode;
 import AST.Stmt.FuncDefStmtNode;
@@ -35,6 +39,7 @@ import AST.Stmt.WhileStmtNode;
 import Tools.globalscope;
 import Tools.error.SyntaxError;
 import Tools.Class;
+import Tools.Type;
 
 public class SymbolCollector implements ASTVisitor {
   globalscope gscope;
@@ -45,25 +50,33 @@ public class SymbolCollector implements ASTVisitor {
 
   @Override
   public void visit(RootNode it) {
-    for (VarDefStmtNode vardefs : it.vardefs) {
-      if (gscope.CheckClass(vardefs.type.getTypename())) {
-        for (InitNode init : vardefs.init) {
-          gscope.ReplaceIdentifier(init.varname, vardefs.type);
+    for (DeclarationNode decl : it.declarations) {
+      decl.accept(this);
+    }
+    if (!gscope.CheckFunction("main")) {
+      throw new SyntaxError("Error: Main function not found", it.pos);
+    } else if (!gscope.GetFunctionRetType("main").getTypename().equals("int")) {
+      throw new SyntaxError("Error: Main function should return int", it.pos);
+    }
+  }
+
+  @Override
+  public void visit(DeclarationNode it) {
+    if (it.funcDef != null) {
+      it.funcDef.accept(this);
+      if (it.funcDef.retType.getTypename().equals("void") || gscope.CheckClass(it.funcDef.retType.getTypename())) {
+        ArrayList<Type> funcparams = new ArrayList<Type>();
+        for (FuncDefStmtNode.ParameterList parameters : it.funcDef.parameters) {
+          funcparams.add(parameters.type);
         }
+        gscope.ReplaceFunction(it.funcDef.funcName, it.funcDef.retType, funcparams);
       } else {
-        throw new SyntaxError("Error: Undefined class " + vardefs.type.getTypename(), vardefs.pos);
+        throw new SyntaxError("Error: Function return an undefined type", it.funcDef.pos);
       }
-    }
-    for (FuncDefStmtNode funcdefs : it.funcdefs) {
-      if (funcdefs.retType.getTypename() == "void" || gscope.CheckClass(funcdefs.retType.getTypename())) {
-        gscope.ReplaceFunction(funcdefs.funcName, funcdefs.retType);
-      } else {
-        throw new SyntaxError("Error: Function return an undefined type", funcdefs.pos);
-      }
-    }
-    for (ClassDefStmtNode classdefs : it.classdefs) {
+    } else if (it.classDef != null) {
+      it.classDef.accept(this);
       Class classdef = new Class();
-      for (VarDefStmtNode vardefs : classdefs.vardefs) {
+      for (VarDefStmtNode vardefs : it.classDef.vardefs) {
         if (gscope.CheckClass(vardefs.type.getTypename())) {
           for (InitNode init : vardefs.init) {
             classdef.AddMember(init.varname, vardefs.type, vardefs.pos);
@@ -72,14 +85,27 @@ public class SymbolCollector implements ASTVisitor {
           throw new SyntaxError("Error: Undefined class " + vardefs.type.getTypename(), vardefs.pos);
         }
       }
-      for (FuncDefStmtNode funcdefs : classdefs.funcdefs) {
-        if (funcdefs.retType.getTypename() == "void" || gscope.CheckClass(funcdefs.retType.getTypename())) {
-          classdef.AddFunction(funcdefs.funcName, funcdefs.retType, funcdefs.pos);
+      for (FuncDefStmtNode funcdefs : it.classDef.funcdefs) {
+        if (funcdefs.retType.getTypename().equals("void") || gscope.CheckClass(funcdefs.retType.getTypename())) {
+          ArrayList<Type> funcparams = new ArrayList<Type>();
+          for (FuncDefStmtNode.ParameterList parameters : funcdefs.parameters) {
+            funcparams.add(parameters.type);
+          }
+          classdef.AddFunction(funcdefs.funcName, funcdefs.retType, funcdefs.pos, funcparams);
         } else {
           throw new SyntaxError("Error: Function return an undefined type", funcdefs.pos);
         }
       }
-      gscope.ReplaceClass(classdefs.classname, classdef);
+      gscope.ReplaceClass(it.classDef.classname, classdef);
+    } else if (it.varDef != null) {
+      // it.varDef.accept(this);
+      // if (gscope.CheckClass(it.varDef.type.getTypename())) {
+      //   for (InitNode init : it.varDef.init) {
+      //     gscope.ReplaceIdentifier(init.varname, it.varDef.type);
+      //   }
+      // } else {
+      //   throw new SyntaxError("Error: Undefined class " + it.varDef.type.getTypename(), it.varDef.pos);
+      // }
     }
   }
   
@@ -173,5 +199,8 @@ public class SymbolCollector implements ASTVisitor {
   
   @Override
   public void visit(ArrayConstExprNode it) {}
+
+  @Override
+  public void visit(EmptyStmtNode it) {}
 }
 

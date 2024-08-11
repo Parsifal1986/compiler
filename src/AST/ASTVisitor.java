@@ -15,6 +15,7 @@ import AST.Expr.UnaryExprNode;
 import AST.Other.ArrayInitializeNode;
 import AST.Other.ArrayNode;
 import AST.Other.ClassInitializeNode;
+import AST.Other.DeclarationNode;
 import AST.Other.InitNode;
 import AST.Other.RootNode;
 import AST.Other.SuffixContentNode;
@@ -25,6 +26,7 @@ import AST.Stmt.ClassDefStmtNode;
 import AST.Stmt.ConditionStmtNode;
 import AST.Stmt.ConstructFuncDefStmtNode;
 import AST.Stmt.ContinueStmtNode;
+import AST.Stmt.EmptyStmtNode;
 import AST.Stmt.ExprStmtNode;
 import AST.Stmt.ForStmtNode;
 import AST.Stmt.FuncDefStmtNode;
@@ -41,6 +43,7 @@ public interface ASTVisitor {
   void visit(SuffixContentNode it);
   void visit(InitNode it);
   void visit(ArrayNode it);
+  void visit(DeclarationNode it);
 
   void visit(BlockStmtNode it);
   void visit(WhileStmtNode it);
@@ -54,6 +57,7 @@ public interface ASTVisitor {
   void visit(BreakStmtNode it);
   void visit(ForStmtNode it);
   void visit(ConstructFuncDefStmtNode it);
+  void visit(EmptyStmtNode it);
 
   void visit(ConstExprNode it);
   void visit(IdentifierExprNode it);

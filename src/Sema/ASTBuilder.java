@@ -17,6 +17,7 @@ import AST.Expr.UnaryExprNode;
 import AST.Other.ArrayInitializeNode;
 import AST.Other.ArrayNode;
 import AST.Other.ClassInitializeNode;
+import AST.Other.DeclarationNode;
 import AST.Other.InitNode;
 import AST.Other.RootNode;
 import AST.Other.SuffixContentNode;
@@ -26,6 +27,8 @@ import AST.Stmt.BreakStmtNode;
 import AST.Stmt.ClassDefStmtNode;
 import AST.Stmt.ConditionStmtNode;
 import AST.Stmt.ConstructFuncDefStmtNode;
+import AST.Stmt.ContinueStmtNode;
+import AST.Stmt.EmptyStmtNode;
 import AST.Stmt.ExprStmtNode;
 import AST.Stmt.ForStmtNode;
 import AST.Stmt.FuncDefStmtNode;
@@ -51,6 +54,7 @@ import Parser.MxParser.ConstTypeContext;
 import Parser.MxParser.ConstructFuncDefContext;
 import Parser.MxParser.ContinueRuleContext;
 import Parser.MxParser.ContinueStmtContext;
+import Parser.MxParser.DeclarationContext;
 import Parser.MxParser.EmptyStmtContext;
 import Parser.MxParser.ExpressionStmtContext;
 import Parser.MxParser.ForRuleContext;
@@ -92,34 +96,39 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
   @Override
   public ASTNode visitProgram(ProgramContext ctx) {
     RootNode root = new RootNode(new Position(ctx));
-    for (FuncDefContext funcDefCtx : ctx.funcDef()) {
-      FuncDefStmtNode funcDef = (FuncDefStmtNode) visit(funcDefCtx);
-      if (gscope.CheckFunction(funcDef.funcName)) {
-        throw new SyntaxError("Function " + funcDef.funcName + " already exists", funcDef.pos);
-      }
-      gscope.AddFunction(funcDef.funcName, null, funcDef.pos);
-      root.AddFuncDef(funcDef);
+    for (DeclarationContext declaration : ctx.declaration()) {
+      root.AddDecalration((DeclarationNode) visit(declaration));
     }
-    for (ClassDefContext classDefCtx : ctx.classDef()) {
-      ClassDefStmtNode classDef = (ClassDefStmtNode) visit(classDefCtx);
-      if (gscope.CheckClass(classDef.classname)) {
-        throw new SyntaxError("Class " + classDef.classname + " already exists", classDef.pos);
-      }
-      gscope.AddClass(classDef.classname, null, classDef.pos);
-      root.AddClassDef(classDef);
-    }
-    for (VarDefContext varDefCtx : ctx.varDef()) {
-      VarDefStmtNode varDef = (VarDefStmtNode) visit(varDefCtx);
-      for (InitNode init : varDef.init) {
-        if (gscope.CheckIdentifier(init.varname)) {
-          throw new SyntaxError("Variable " + init.varname + " already exists", varDef.pos);
-        }
-        gscope.AddIdentifier(init.varname, null, varDef.pos);
-      }
-      root.AddVarDef(varDef);
-    }
-
     return root;
+  }
+
+  @Override
+  public ASTNode visitDeclaration(DeclarationContext ctx) {
+    DeclarationNode declaration = new DeclarationNode(new Position(ctx));
+    if (ctx.funcDef() != null) {
+      declaration.funcDef = (FuncDefStmtNode) visit(ctx.funcDef());
+      if (gscope.CheckFunction(declaration.funcDef.funcName)) {
+        throw new SyntaxError("Function " + declaration.funcDef.funcName + " already exists", declaration.funcDef.pos);
+      }
+      gscope.AddFunction(declaration.funcDef.funcName, null, null, declaration.funcDef.pos);
+    }
+    if (ctx.classDef() != null) {
+      declaration.classDef = (ClassDefStmtNode) visit(ctx.classDef());
+      if (gscope.CheckClass(declaration.classDef.classname)) {
+        throw new SyntaxError("Class " + declaration.classDef.classname + " already exists", declaration.classDef.pos);
+      }
+      gscope.AddClass(declaration.classDef.classname, null, declaration.classDef.pos);
+    }
+    if (ctx.varDef() != null) {
+      declaration.varDef = (VarDefStmtNode) visit(ctx.varDef());
+      // for (InitNode init : declaration.varDef.init) {
+      //   if (gscope.CheckIdentifier(init.varname)) {
+      //     throw new SyntaxError("Variable " + init.varname + " already exists", declaration.varDef.pos);
+      //   }
+      //   gscope.AddIdentifier(init.varname, null, declaration.varDef.pos);
+      // }
+    }
+    return declaration;
   }
 
   @Override
@@ -133,6 +142,11 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     }
 
     funcDef.body = (BlockStmtNode) visit(ctx.suite());
+      if (funcDef.funcName.equals("main")) {
+      if (funcDef.parameters.size() > 0) {
+        throw new SyntaxError("Main function should not have any parameters", funcDef.pos);
+      }
+    }
     return funcDef;
   }
 
@@ -158,17 +172,25 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 
   @Override
   public ASTNode visitPrimary(PrimaryContext ctx) {
+    PrimeExprNode primeExpr = new PrimeExprNode(new Position(ctx));
     if (ctx.Identifier() != null) {
-      return new IdentifierExprNode(new Position(ctx), ctx.Identifier().getText());
+      primeExpr.identifierExpr = new IdentifierExprNode(new Position(ctx), ctx.Identifier().getText());
+      primeExpr.exprType = primeExpr.identifierExpr.exprType;
     } else if (ctx.constType() != null) {
-      return visit(ctx.constType());
+      primeExpr.constExpr = (ConstExprNode) visit(ctx.constType());
+      primeExpr.exprType = primeExpr.constExpr.exprType;
     } else if (ctx.This() != null) {
-      return new ThisExprNode(new Position(ctx)); // Scope
+      primeExpr.thisExpr = new ThisExprNode(new Position(ctx));
+      primeExpr.exprType = primeExpr.thisExpr.exprType;
     } else if (ctx.newexp() != null) {
-      return visit(ctx.newexp());
-    } else {
+      primeExpr.newExpr = (NewExprNode) visit(ctx.newexp());
+      primeExpr.exprType = primeExpr.newExpr.exprType;
+    } else if (ctx.parenExp() != null) {
+      primeExpr.parenExpr = (ExprNode) visit(ctx.parenExp());
+    }else {
       throw new SyntaxError("Unknown primary expression", new Position(ctx));
     }
+    return primeExpr;
   }
 
   @Override
@@ -178,7 +200,16 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 
   @Override
   public ASTNode visitNewexp(NewexpContext ctx) {
-    return new NewExprNode(null);
+    NewExprNode newExpr = new NewExprNode(new Position(ctx));
+    if (ctx.arrayInitialize() != null) {
+      newExpr.arrayInitialize = (ArrayInitializeNode) visit(ctx.arrayInitialize());
+      newExpr.exprType = newExpr.arrayInitialize.type;
+    } else if (ctx.classInitialize() != null) {
+      newExpr.classInitialize = (ClassInitializeNode) visit(ctx.classInitialize());
+    } else {
+      throw new SyntaxError("Unknown new expression", new Position(ctx));
+    }
+    return newExpr;
   }
   
   @Override
@@ -208,7 +239,14 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     ctx.funcDef().forEach(
       funcDef -> classDef.AddFuncDef((FuncDefStmtNode) visit(funcDef))
     );
-    
+    if (ctx.constructFuncDef().size() > 1) {
+      throw new SyntaxError("Multiple construct function definition", new Position(ctx));
+    } else if (ctx.constructFuncDef().size() == 1) {
+      classDef.constructfuncdef = (ConstructFuncDefStmtNode) visit(ctx.constructFuncDef(0));
+      if (!classDef.constructfuncdef.classname.equals(classDef.classname)) {
+        throw new SyntaxError("Construct function name should be the same as class name", classDef.constructfuncdef.pos);
+      }
+    }
     return classDef;
   }
 
@@ -224,7 +262,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
   public ASTNode visitArrayInitialize(ArrayInitializeContext ctx) {
     ArrayInitializeNode arrayInitialize = new ArrayInitializeNode(new Position(ctx));
     if (ctx.arrayConst() != null) {
-      arrayInitialize.type = ((ArrayConstExprNode)visit(ctx.arrayConst())).type;
+      arrayInitialize.type = ((ArrayConstExprNode)visit(ctx.arrayConst())).exprType;
     } else {
       arrayInitialize.type = Type.GetArrayDefType(ctx.type().getText(), ctx.getText());
       ctx.expression().forEach(
@@ -291,6 +329,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     AssignExprNode assignexpr = new AssignExprNode(new Position(ctx));
     assignexpr.lhs = (ExprNode) visit(ctx.expression(0));
     assignexpr.rhs = (ExprNode) visit(ctx.expression(1));
+    assignexpr.exprType = assignexpr.rhs.exprType;
     return assignexpr;
   }
 
@@ -355,12 +394,12 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 
   @Override
   public ASTNode visitContinueRule(ContinueRuleContext ctx) {
-    return new ConditionStmtNode(new Position(ctx));
+    return new ContinueStmtNode(new Position(ctx));
   }
 
   @Override
   public ASTNode visitReturnRule(ReturnRuleContext ctx) {
-    return new ReturnStmtNode(new Position(ctx), (ExprNode) visit(ctx.expression()));
+    return new ReturnStmtNode(new Position(ctx), ctx.expression() == null ? null : (ExprNode) visit(ctx.expression()));
   }
 
   @Override
@@ -372,7 +411,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
   public ASTNode visitClassInitialize(ClassInitializeContext ctx) {
     ClassInitializeNode classInitialize = new ClassInitializeNode(new Position(ctx));
     classInitialize.classname = ctx.Identifier().getText();
-    return super.visitClassInitialize(ctx);
+    return classInitialize;
   }
 
   @Override
@@ -380,9 +419,11 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     ForStmtNode forStmt = new ForStmtNode(new Position(ctx));
     if (ctx.initExpr != null) {
       forStmt.init = (ExprNode) visit(ctx.initExpr);
-    } else if (ctx.condExpr != null) {
+    }
+    if (ctx.condExpr != null) {
       forStmt.cond = (ExprNode) visit(ctx.condExpr);
-    } else if (ctx.stepExpr != null) {
+    }
+    if (ctx.stepExpr != null) {
       forStmt.step = (ExprNode) visit(ctx.stepExpr);
     }
     forStmt.body = (StmtNode) visit(ctx.statement());
@@ -424,7 +465,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 
   @Override
   public ASTNode visitEmptyStmt(EmptyStmtContext ctx) {
-    return null;
+    return new EmptyStmtNode(new Position(ctx));
   }
   
   @Override
@@ -501,12 +542,10 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         ctx.expression().forEach(
           expression -> suffixContent.add((ExprNode) visit(expression))
         );
-      } else {
-        suffixContent.expr = null;
       }
     } else if (ctx.Dot() != null) {
       suffixContent.type = SuffixContentNode.SuffixType.MEMBERV;
-      suffixContent.add((ExprNode) visit(ctx.Identifier()));
+      suffixContent.add((ExprNode) new IdentifierExprNode(new Position(ctx), ctx.Identifier().toString()));
     }
     return suffixContent;
   }

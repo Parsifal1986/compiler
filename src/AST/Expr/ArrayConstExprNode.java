@@ -15,12 +15,13 @@ public class ArrayConstExprNode extends ExprNode {
 
   public ArrayConstExprNode(ArrayConstContext ctx) {
     super(new Position(ctx));
-    type = Type.GetArrayConstType(ctx);
+    exprType = Type.GetArrayConstType(ctx);
     value = new ArrayList<ExprNode>();
+    islvalue = false;
   }
 
   public void accept(ASTVisitor visitor) {
     visitor.visit(this);
   }
-  
+
 }

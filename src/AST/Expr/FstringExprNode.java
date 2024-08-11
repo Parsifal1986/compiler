@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import AST.ASTVisitor;
 import Tools.Position;
+import Tools.Type;
 
 public class FstringExprNode extends ExprNode {
   public ArrayList<String> strings;
@@ -13,6 +14,8 @@ public class FstringExprNode extends ExprNode {
     super(pos);
     strings = new ArrayList<String>();
     exprs = new ArrayList<ExprNode>();
+    exprType = new Type("String", 0);
+    islvalue = false;
   }
 
   public void AddString(String str) {

@@ -4,7 +4,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Pair;
 
 public class Position {
-  private int line, charpos;
+  public int line, charpos;
 
   public Position() {
     line = 0;

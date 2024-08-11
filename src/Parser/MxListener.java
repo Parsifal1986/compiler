@@ -18,6 +18,16 @@ public interface MxListener extends ParseTreeListener {
 	 */
 	void exitProgram(MxParser.ProgramContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link MxParser#declaration}.
+	 * @param ctx the parse tree
+	 */
+	void enterDeclaration(MxParser.DeclarationContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MxParser#declaration}.
+	 * @param ctx the parse tree
+	 */
+	void exitDeclaration(MxParser.DeclarationContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link MxParser#type}.
 	 * @param ctx the parse tree
 	 */
@@ -126,18 +136,6 @@ public interface MxListener extends ParseTreeListener {
 	 */
 	void exitPrimaryExp(MxParser.PrimaryExpContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code parenExp}
-	 * labeled alternative in {@link MxParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterParenExp(MxParser.ParenExpContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code parenExp}
-	 * labeled alternative in {@link MxParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitParenExp(MxParser.ParenExpContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code suffixExp}
 	 * labeled alternative in {@link MxParser#expression}.
 	 * @param ctx the parse tree
@@ -183,6 +181,16 @@ public interface MxListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitPrimary(MxParser.PrimaryContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link MxParser#parenExp}.
+	 * @param ctx the parse tree
+	 */
+	void enterParenExp(MxParser.ParenExpContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MxParser#parenExp}.
+	 * @param ctx the parse tree
+	 */
+	void exitParenExp(MxParser.ParenExpContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MxParser#suffix}.
 	 * @param ctx the parse tree
