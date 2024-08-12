@@ -35,8 +35,8 @@ public class Compiler {
       SematicChecker sematicChecker = new SematicChecker(gscope);
       sematicChecker.visit(ASTRoot);
     } catch (Tools.error.Error e) {
-      System.err.println(e.getMessage() + " at " + e.getErrorLine().line + ":" + e.getErrorLine().charpos);
-      // System.err.println(e.getMessage());
+      // System.err.println(e.getMessage() + " at " + e.getErrorLine().line + ":" + e.getErrorLine().charpos);
+      System.err.println(e.getMessage());
       System.exit(1);
     }
   }
