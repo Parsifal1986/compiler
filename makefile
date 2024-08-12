@@ -1,21 +1,7 @@
-# 变量定义
-JAVAC = javac
-JAVA = java
-SRC = src
-BIN = build
-MAIN = Compiler
-ANTLR_JAR_PATH = /ulib/antlr-4.9.3-complete.jar
+.PHONY: build
+build:
+	find -name '*.java' | xargs javac -d build -cp /ulib/antlr-4.9.3-complete.jar
 
-.PHONY: build clean run
-
-# 编译目标
-build: 
-	@javac -sourcepath src -d $(BIN) src/Compiler.java
-
-# 运行Java程序
+.PHONY: run
 run:
-	@java -cp "$(BIN):$(ANTLR_JAR_PATH)" Compiler
-
-# 清理生成的class文件
-clean:
-	rm -rf $(BIN)
+	cd build && java -cp /ulib/antlr-4.9.3-complete.jar:. Compiler
