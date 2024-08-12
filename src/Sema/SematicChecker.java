@@ -233,7 +233,7 @@ public class SematicChecker implements ASTVisitor {
     it.body.accept(this);
     if (!current_scope.hasreturn && !it.retType.getTypename().equals("void") && !it.funcName.equals("main")) {
       // throw new SyntaxError("Error: Function has no return", it.pos);
-      throw new SyntaxError("Type Mismatch", it.pos);
+      throw new SyntaxError("Invalid Control Flow", it.pos);
     }
     current_scope.hasreturn = false;
     current_scope.InFunc = false;
