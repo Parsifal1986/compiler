@@ -330,6 +330,13 @@ public class SematicChecker implements ASTVisitor {
   public void visit(FstringExprNode it) {
     for (ExprNode exprs : it.exprs) {
       exprs.accept(this);
+      if (exprs.exprType.getDim() > 0) {
+        // throw new SyntaxError("Error: Fstring expression not string", it.pos);
+        throw new SyntaxError("Invalid Type", it.pos);
+      } else if (!exprs.exprType.getTypename().equals("bool") && !exprs.exprType.getTypename().equals("int") && !exprs.exprType.getTypename().equals("string")) {
+        // throw new SyntaxError("Error: Fstring expression not int or string", it.pos);
+        throw new SyntaxError("Invalid Type", it.pos);
+      }
     }
   }
   

@@ -14,7 +14,7 @@ public class FstringExprNode extends ExprNode {
     super(pos);
     strings = new ArrayList<String>();
     exprs = new ArrayList<ExprNode>();
-    exprType = new Type("String", 0);
+    exprType = new Type("string", 0);
     islvalue = false;
   }
 
