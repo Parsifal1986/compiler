@@ -36,7 +36,7 @@ public class Compiler {
       sematicChecker.visit(ASTRoot);
     } catch (Tools.error.Error e) {
       // System.err.println(e.getMessage() + " at " + e.getErrorLine().line + ":" + e.getErrorLine().charpos);
-      System.err.println(e.getMessage());
+      System.out.println(e.getMessage());
       System.exit(1);
     }
   }
