@@ -25,7 +25,8 @@ public class Class {
 
   public void AddFunction(String name, Type retType, Position pos, ArrayList<Type> params) {
     if (functions.containsKey(name)) {
-      throw new SyntaxError("Function " + name + " already exists", pos);
+      // throw new SyntaxError("Function " + name + " already exists", pos);
+      throw new SyntaxError("Multiple Definitions", pos);
     }
     functions.put(name, retType);
     funcparams.put(name, params);
@@ -40,7 +41,8 @@ public class Class {
 
   public void AddMember(String name, Type type, Position pos) {
     if (members.containsKey(name)) {
-      throw new SyntaxError("Member " + name + " already exists", pos);
+      // throw new SyntaxError("Member " + name + " already exists", pos);
+      throw new SyntaxError("Multiple Definitions", pos);
     }
     members.put(name, type);
   }

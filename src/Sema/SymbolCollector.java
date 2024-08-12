@@ -63,6 +63,9 @@ public class SymbolCollector implements ASTVisitor {
   @Override
   public void visit(DeclarationNode it) {
     if (it.funcDef != null) {
+      if (gscope.CheckClass(it.funcDef.funcName) || gscope.CheckIdentifier(it.funcDef.funcName)) {
+        throw new SyntaxError("Multiple Definitions", it.funcDef.pos);
+      }
       it.funcDef.accept(this);
       if (it.funcDef.retType.getTypename().equals("void") || gscope.CheckClass(it.funcDef.retType.getTypename())) {
         ArrayList<Type> funcparams = new ArrayList<Type>();

@@ -87,7 +87,7 @@ public class SematicChecker implements ASTVisitor {
           throw new SyntaxError("Type Mismatch", it.pos);
         }
       }
-    } else {
+    } else if (it.expr != null) {
       it.expr.accept(this);
       if (it.type.getDim() != it.expr.exprType.getDim()) {
         // throw new SyntaxError("Error: Array dimension mismatch", it.pos);
