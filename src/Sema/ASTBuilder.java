@@ -108,14 +108,16 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     if (ctx.funcDef() != null) {
       declaration.funcDef = (FuncDefStmtNode) visit(ctx.funcDef());
       if (gscope.CheckFunction(declaration.funcDef.funcName)) {
-        throw new SyntaxError("Function " + declaration.funcDef.funcName + " already exists", declaration.funcDef.pos);
+        // throw new SyntaxError("Function " + declaration.funcDef.funcName + " already exists", declaration.funcDef.pos);
+        throw new SyntaxError("Multiple Definition", declaration.funcDef.pos);
       }
       gscope.AddFunction(declaration.funcDef.funcName, null, null, declaration.funcDef.pos);
     }
     if (ctx.classDef() != null) {
       declaration.classDef = (ClassDefStmtNode) visit(ctx.classDef());
       if (gscope.CheckClass(declaration.classDef.classname)) {
-        throw new SyntaxError("Class " + declaration.classDef.classname + " already exists", declaration.classDef.pos);
+        // throw new SyntaxError("Class " + declaration.classDef.classname + " already exists", declaration.classDef.pos);
+        throw new SyntaxError("Multiple Definition", declaration.classDef.pos);
       }
       gscope.AddClass(declaration.classDef.classname, null, declaration.classDef.pos);
     }
@@ -226,13 +228,6 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
   public ASTNode visitClassDef(ClassDefContext ctx) {
     ClassDefStmtNode classDef = new ClassDefStmtNode(new Position(ctx));
     classDef.classname = ctx.classname.getText();
-    if (ctx.constructFuncDef().size() > 0) {
-      if (ctx.constructFuncDef().size() > 1) {
-        throw new SyntaxError("Multiple construct function definition", new Position(ctx));
-      } else {
-        classDef.constructfuncdef = (ConstructFuncDefStmtNode) visit(ctx.constructFuncDef(0));
-      }
-    }
     ctx.varDef().forEach(
       varDef -> classDef.AddVarDef((VarDefStmtNode) visit(varDef))
     );
@@ -240,7 +235,8 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
       funcDef -> classDef.AddFuncDef((FuncDefStmtNode) visit(funcDef))
     );
     if (ctx.constructFuncDef().size() > 1) {
-      throw new SyntaxError("Multiple construct function definition", new Position(ctx));
+      // throw new SyntaxError("Multiple construct function definition", new Position(ctx));
+      throw new SyntaxError("Multiple Definitions", new Position(ctx));
     } else if (ctx.constructFuncDef().size() == 1) {
       classDef.constructfuncdef = (ConstructFuncDefStmtNode) visit(ctx.constructFuncDef(0));
       if (!classDef.constructfuncdef.classname.equals(classDef.classname)) {

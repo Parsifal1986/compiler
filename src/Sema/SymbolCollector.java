@@ -71,7 +71,8 @@ public class SymbolCollector implements ASTVisitor {
         }
         gscope.ReplaceFunction(it.funcDef.funcName, it.funcDef.retType, funcparams);
       } else {
-        throw new SyntaxError("Error: Function return an undefined type", it.funcDef.pos);
+        // throw new SyntaxError("Error: Function return an undefined type", it.funcDef.pos);
+        throw new SyntaxError("Undefined Identifier", it.funcDef.pos);
       }
     } else if (it.classDef != null) {
       it.classDef.accept(this);
@@ -82,7 +83,8 @@ public class SymbolCollector implements ASTVisitor {
             classdef.AddMember(init.varname, vardefs.type, vardefs.pos);
           }
         } else {
-          throw new SyntaxError("Error: Undefined class " + vardefs.type.getTypename(), vardefs.pos);
+          // throw new SyntaxError("Error: Undefined class " + vardefs.type.getTypename(), vardefs.pos);
+          throw new SyntaxError("Undefined Identifier", vardefs.pos);
         }
       }
       for (FuncDefStmtNode funcdefs : it.classDef.funcdefs) {
@@ -93,7 +95,8 @@ public class SymbolCollector implements ASTVisitor {
           }
           classdef.AddFunction(funcdefs.funcName, funcdefs.retType, funcdefs.pos, funcparams);
         } else {
-          throw new SyntaxError("Error: Function return an undefined type", funcdefs.pos);
+          // throw new SyntaxError("Error: Function return an undefined type", funcdefs.pos);
+          throw new SyntaxError("Undefined Identifier", funcdefs.pos);
         }
       }
       gscope.ReplaceClass(it.classDef.classname, classdef);

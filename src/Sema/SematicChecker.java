@@ -83,13 +83,15 @@ public class SematicChecker implements ASTVisitor {
       for (ExprNode size : it.size) {
         size.accept(this);
         if (!size.exprType.getTypename().equals("int")) {
-          throw new SyntaxError("Error: Array size not int", it.pos);
+          // throw new SyntaxError("Error: Array size not int", it.pos);
+          throw new SyntaxError("Type Mismatch", it.pos);
         }
       }
     } else {
       it.expr.accept(this);
       if (it.type.getDim() != it.expr.exprType.getDim()) {
-        throw new SyntaxError("Error: Array dimension mismatch", it.pos);
+        // throw new SyntaxError("Error: Array dimension mismatch", it.pos);
+        throw new SyntaxError("Type Mismatch", it.pos);
       }
     }
   }
@@ -97,7 +99,8 @@ public class SematicChecker implements ASTVisitor {
   @Override
   public void visit(ClassInitializeNode it) {
     if (!gscope.CheckClass(it.classname)) {
-      throw new SyntaxError("Error: Undefined class " + it.classname, it.pos);
+      // throw new SyntaxError("Error: Undefined class " + it.classname, it.pos);
+      throw new SyntaxError("Undefined Identifier", it.pos);
     }
   }
 
@@ -134,7 +137,8 @@ public class SematicChecker implements ASTVisitor {
     current_scope.InLoop = true;
     it.condition.accept(this);
     if (!it.condition.exprType.getTypename().equals("bool")) {
-      throw new SyntaxError("Error: While condition not bool", it.pos);
+      // throw new SyntaxError("Error: While condition not bool", it.pos);
+      throw new SyntaxError("Invalid Type", it.pos);
     }
     it.stmt.accept(this);
     current_scope.InLoop = false;
@@ -146,7 +150,8 @@ public class SematicChecker implements ASTVisitor {
   public void visit(ConditionStmtNode it) {
     it.condition.accept(this);
     if (!it.condition.exprType.getTypename().equals("bool") || it.condition.exprType.getDim() != 0) {
-      throw new SyntaxError("Error: Condition not bool", it.pos);
+      // throw new SyntaxError("Error: Condition not bool", it.pos);
+      throw new SyntaxError("Invalid Type", it.pos);
     }
     current_scope = new scope(current_scope);
     it.trueStmt.accept(this);
@@ -163,21 +168,24 @@ public class SematicChecker implements ASTVisitor {
   @Override
   public void visit(ContinueStmtNode it) {
     if (current_scope.InLoop == false) {
-      throw new SyntaxError("Error: Continue statement not in loop", it.pos);
+      // throw new SyntaxError("Error: Continue statement not in loop", it.pos);
+      throw new SyntaxError("Invalid Control Flow", it.pos);
     }
   }
   
   @Override
   public void visit(VarDefStmtNode it) {
     if (!gscope.CheckClass(it.type.getTypename())) {
-      throw new SyntaxError("Error: Variable type is class", it.pos);
+      // throw new SyntaxError("Error: Variable type is class", it.pos);
+      throw new SyntaxError("Undefined Identifier", it.pos);
     }
     for (InitNode init : it.init) {
       init.accept(this);
       if (init.expr == null) {
         current_scope.AddIdentifier(init.varname, it.type, it.pos);
       } else if (!it.type.equals(init.expr.exprType)) {
-        throw new SyntaxError("Error: Variable type mismatch", it.pos);
+        // throw new SyntaxError("Error: Variable type mismatch", it.pos);
+        throw new SyntaxError("Type Mismatch", it.pos);
       } else {
         current_scope.AddIdentifier(init.varname, it.type, it.pos);
       }
@@ -224,7 +232,8 @@ public class SematicChecker implements ASTVisitor {
     current_scope.AddFunction(it.funcName, it.retType, funcparams, it.pos);
     it.body.accept(this);
     if (!current_scope.hasreturn && !it.retType.getTypename().equals("void") && !it.funcName.equals("main")) {
-      throw new SyntaxError("Error: Function has no return", it.pos);
+      // throw new SyntaxError("Error: Function has no return", it.pos);
+      throw new SyntaxError("Type Mismatch", it.pos);
     }
     current_scope.hasreturn = false;
     current_scope.InFunc = false;
@@ -234,16 +243,19 @@ public class SematicChecker implements ASTVisitor {
   @Override
   public void visit(ReturnStmtNode it) {
     if (current_scope.InFunc == false) {
-      throw new SyntaxError("Error: Return statement not in function", it.pos);
+      // throw new SyntaxError("Error: Return statement not in function", it.pos);
+      throw new SyntaxError("Invalid Control Flow", it.pos);
     }
     if (it.expr == null) {
       if (!current_scope.GetFunctionRetType(current_scope.funcname).getTypename().equals("void") && !current_scope.funcname.equals("main")) {
-        throw new SyntaxError("Error: Return type mismatch", it.pos);
+        // throw new SyntaxError("Error: Return type mismatch", it.pos);
+        throw new SyntaxError("Type Mismatch", it.pos);
       }
     } else {
       it.expr.accept(this);
       if (!it.expr.exprType.equals(current_scope.GetFunctionRetType(current_scope.funcname))) {
-        throw new SyntaxError("Error: Return type mismatch", it.pos);
+        // throw new SyntaxError("Error: Return type mismatch", it.pos);
+        throw new SyntaxError("Type Mismatch", it.pos);
       }
     }
     current_scope.hasreturn = true;
@@ -252,7 +264,8 @@ public class SematicChecker implements ASTVisitor {
   @Override
   public void visit(BreakStmtNode it) {
     if (current_scope.InLoop == false) {
-      throw new SyntaxError("Error: Break statement not in loop", it.pos);
+      // throw new SyntaxError("Error: Break statement not in loop", it.pos);
+      throw new SyntaxError("Invalid Control Flow", it.pos);
     }
   }
   
@@ -266,7 +279,8 @@ public class SematicChecker implements ASTVisitor {
     if (it.cond != null) {
       it.cond.accept(this);
       if (!it.cond.exprType.getTypename().equals("bool")) {
-        throw new SyntaxError("Error: For condition not bool", it.pos);
+        // throw new SyntaxError("Error: For condition not bool", it.pos);
+        throw new SyntaxError("Invalid Type", it.pos);
       }
     }
     if (it.step != null) {
@@ -307,7 +321,8 @@ public class SematicChecker implements ASTVisitor {
       it.islvalue = false;
       it.exprType.params = current_scope.GetFunctionParams(it.Id.toString());
     } else {
-      throw new SyntaxError("Error: Undefined identifier " + it.Id.toString(), it.pos);
+      // throw new SyntaxError("Error: Undefined identifier " + it.Id.toString(), it.pos);
+      throw new SyntaxError("Undefined Identifier", it.pos);
     }
   }
   
@@ -334,7 +349,8 @@ public class SematicChecker implements ASTVisitor {
     it.expr.accept(this);
     if (it.op == UnaryExprNode.Opcode.PRE_DEC || it.op == UnaryExprNode.Opcode.PRE_INC || it.op == UnaryExprNode.Opcode.SUF_DEC || it.op == UnaryExprNode.Opcode.SUF_INC) {
       if (it.expr.islvalue == false || !it.expr.exprType.getTypename().equals("int")) {
-        throw new SyntaxError("Error: Unary expression not lvalue", it.pos);
+        // throw new SyntaxError("Error: Unary expression not lvalue", it.pos);
+        throw new SyntaxError("Invalid Type", it.pos);
       }
       if (it.op == UnaryExprNode.Opcode.PRE_DEC || it.op == UnaryExprNode.Opcode.PRE_INC) {
         it.expr.islvalue = true;
@@ -345,14 +361,16 @@ public class SematicChecker implements ASTVisitor {
     }
     if (it.op == UnaryExprNode.Opcode.NOT) {
       if (!it.expr.exprType.getTypename().equals("bool") && !it.expr.exprType.getTypename().equals("int")) {
-        throw new SyntaxError("Error: Unary expression not bool or int", it.pos);
+        // throw new SyntaxError("Error: Unary expression not bool or int", it.pos);
+        throw new SyntaxError("Invalid Type", it.pos);
       }
       it.exprType = new Type("bool", 0);
       it.expr.islvalue = false;
     }
     if (it.op == UnaryExprNode.Opcode.NEG || it.op == UnaryExprNode.Opcode.BIT_NOT) {
       if (!it.expr.exprType.getTypename().equals("int")) {
-        throw new SyntaxError("Error: Unary expression not int", it.pos);
+        // throw new SyntaxError("Error: Unary expression not int", it.pos);
+        throw new SyntaxError("Invalid Type", it.pos);
       }
       it.exprType = new Type("int", 0);
       it.expr.islvalue = false;
@@ -371,7 +389,8 @@ public class SematicChecker implements ASTVisitor {
         it.op == BinaryExprNode.Opcode.BIT_OR) {
       if (!it.lhs.exprType.getTypename().equals("int") || !it.rhs.exprType.getTypename().equals("int") ||
         it.lhs.exprType.getDim() > 0 ||it.rhs.exprType.getDim() > 0) {
-        throw new SyntaxError("Error: Binary expression not int", it.pos);
+        // throw new SyntaxError("Error: Binary expression not int", it.pos);
+        throw new SyntaxError("Invalid Type", it.pos);
       }
       it.exprType = new Type("int", 0);
       it.islvalue = false;
@@ -380,7 +399,8 @@ public class SematicChecker implements ASTVisitor {
       if ((!it.lhs.exprType.getTypename().equals("int") || !it.rhs.exprType.getTypename().equals("int")) &&
         (!it.lhs.exprType.getTypename().equals("string") || !it.rhs.exprType.getTypename().equals("string") ||
         it.lhs.exprType.getDim() > 0 || it.rhs.exprType.getDim() > 0)) {
-        throw new SyntaxError("Error: Binary expression not int or string", it.pos);
+        // throw new SyntaxError("Error: Binary expression not int or string", it.pos);
+        throw new SyntaxError("Invalid Type", it.pos);
       }
       if (it.lhs.exprType.getTypename().equals("string") &&
           it.rhs.exprType.getTypename().equals("string")) {
@@ -392,11 +412,13 @@ public class SematicChecker implements ASTVisitor {
     }
     if (it.op == BinaryExprNode.Opcode.AND || it.op == BinaryExprNode.Opcode.OR) {
       if (it.lhs.exprType.getDim() > 0 || it.rhs.exprType.getDim() > 0) {
-        throw new SyntaxError("Error: Binary expression cannot be array", it.pos);
+        // throw new SyntaxError("Error: Binary expression cannot be array", it.pos);
+        throw new SyntaxError("Invalid Type", it.pos);
       }
       if ((!it.lhs.exprType.getTypename().equals("bool") && !it.lhs.exprType.getTypename().equals("int")) ||
         (!it.rhs.exprType.getTypename().equals("bool") && !it.rhs.exprType.getTypename().equals("int"))) {
-        throw new SyntaxError("Error: Binary expression not bool or int", it.pos);
+        // throw new SyntaxError("Error: Binary expression not bool or int", it.pos);
+        throw new SyntaxError("Invalid Type", it.pos);
       }
       it.exprType = new Type("bool", 0);
       it.islvalue = false;
@@ -406,14 +428,16 @@ public class SematicChecker implements ASTVisitor {
       if ((!it.lhs.exprType.getTypename().equals("int") || !it.rhs.exprType.getTypename().equals("int")) && 
           (!it.lhs.exprType.getTypename().equals("string") || !it.rhs.exprType.getTypename().equals("string") || 
           it.lhs.exprType.getDim() > 0 || it.rhs.exprType.getDim() > 0)) {
-        throw new SyntaxError("Error: Binary expression not int", it.pos);
+          // throw new SyntaxError("Error: Binary expression not int", it.pos);
+          throw new SyntaxError("Invalid Type", it.pos);
       }
       it.exprType = new Type("bool", 0);
       it.islvalue = false;
     }
     if (it.op == BinaryExprNode.Opcode.NE || it.op == BinaryExprNode.Opcode.EQ) {
       if (!it.lhs.exprType.equals(it.rhs.exprType)) {
-        throw new SyntaxError("Error: Binary expression not same type", it.pos);
+        // throw new SyntaxError("Error: Binary expression not same type", it.pos);
+        throw new SyntaxError("Invalid Type", it.pos);
       }
       it.exprType = new Type("bool", 0);
       it.islvalue = false;
@@ -426,7 +450,8 @@ public class SematicChecker implements ASTVisitor {
     it.trueExpr.accept(this);
     it.falseExpr.accept(this);
     if (!it.condition.exprType.getTypename().equals("bool") || !it.trueExpr.exprType.equals(it.falseExpr.exprType)) {
-      throw new SyntaxError("Error: Ternary expression not bool or same type", it.pos);
+      // throw new SyntaxError("Error: Ternary expression not bool or same type", it.pos);
+      throw new SyntaxError("Invalid Type", it.pos);
     }
     it.exprType = it.trueExpr.exprType;
     it.islvalue = false;
@@ -443,10 +468,12 @@ public class SematicChecker implements ASTVisitor {
     it.lhs.accept(this);
     it.rhs.accept(this);
     if (it.lhs.islvalue == false) {
-      throw new SyntaxError("Error: Assign expression not lvalue", it.pos);
+      // throw new SyntaxError("Error: Assign expression not lvalue", it.pos);
+      throw new SyntaxError("Invalid Type", it.pos);
     }
     if (!it.lhs.exprType.equals(it.rhs.exprType)) {
-      throw new SyntaxError("Error: Assign expression not same type", it.pos);
+      // throw new SyntaxError("Error: Assign expression not same type", it.pos);
+      throw new SyntaxError("Type Mismatch", it.pos);
     }
     it.exprType = it.lhs.exprType;
     it.islvalue = false;
@@ -460,14 +487,17 @@ public class SematicChecker implements ASTVisitor {
       if (suffixContent.type == SuffixContentNode.SuffixType.FUNCC) {
         suffixContent.accept(this);
         if (!it.exprType.isfunc) {
-          throw new SyntaxError("Error: Function call on non-function", it.pos);
+          // throw new SyntaxError("Error: Function call on non-function", it.pos);
+          throw new SyntaxError("Invalid Type", it.pos);
         }
         if (suffixContent.expr.size() != it.exprType.params.size()) {
-          throw new SyntaxError("Error: Function call parameter mismatch", it.pos);
+          // throw new SyntaxError("Error: Function call parameter mismatch", it.pos);
+          throw new SyntaxError("Type Mismatch", it.pos);
         }
         for (int i = 0; i < suffixContent.expr.size(); i++) {
           if (!suffixContent.expr.get(i).exprType.equals(it.exprType.params.get(i))) {
-            throw new SyntaxError("Error: Function call parameter mismatch", it.pos);
+            // throw new SyntaxError("Error: Function call parameter mismatch", it.pos);
+            throw new SyntaxError("Type Mismatch", it.pos);
           }
         }
         it.islvalue = false;
@@ -475,16 +505,19 @@ public class SematicChecker implements ASTVisitor {
       } else if (suffixContent.type == SuffixContentNode.SuffixType.ARRV) {
         suffixContent.accept(this);
         if (suffixContent.expr.get(0).exprType.getDim() != 0 || !suffixContent.expr.get(0).exprType.getTypename().equals("int")) {
-          throw new SyntaxError("Error: Array access expression is not the right type", it.pos);
+          // throw new SyntaxError("Error: Array access expression is not the right type", it.pos);
+          throw new SyntaxError("Invalid Type", it.pos);
         }
         if (it.exprType.getDim() <= 0) {
-          throw new SyntaxError("Error: Array access on non-array", it.pos);
+          // throw new SyntaxError("Error: Array access on non-array", it.pos);
+          throw new SyntaxError("Dimension Out Of Bound", it.pos);
         }
         it.exprType = new Type(it.exprType.getTypename(), it.exprType.getDim() - 1);
         it.islvalue = true;
       } else if (suffixContent.type == SuffixContentNode.SuffixType.MEMBERV) {
         if (!gscope.CheckClass(it.exprType.getTypename())) {
-          throw new SyntaxError("Error: Member access on non-class", it.pos);
+          // throw new SyntaxError("Error: Member access on non-class", it.pos);
+          throw new SyntaxError("Invalid Type", it.pos);
         } else {
           if (it.exprType.getDim() > 0) {
             scope old_scope = current_scope;
@@ -547,7 +580,8 @@ public class SematicChecker implements ASTVisitor {
     dim = it.value.get(0).exprType.getDim();
     for (ExprNode expr : it.value) {
       if (expr.exprType.getDim() != dim) {
-        throw new SyntaxError("Error: Array dimension mismatch", it.pos);
+        // throw new SyntaxError("Error: Array dimension mismatch", it.pos);
+        throw new SyntaxError("Type Dismatch", it.pos);
       }
     }
   }
