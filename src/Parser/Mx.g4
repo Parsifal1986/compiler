@@ -160,7 +160,7 @@ funcDef: retType = type funcName = Identifier ('(' (type Identifier (',' type Id
 
 // funcCall: (Identifier | BuildInFunc) ('(' (expression(',' expression)*)? ')' | '()');
 
-arrayInitialize: ((type '=' arrayConst) | (type ('[' expression ']' | '['']')('[' expression']' | '['']')*));
+arrayInitialize: ((type arrayConst) | (type ('[' expression ']' | '['']')('[' expression']' | '['']')*));
 
 classInitialize: Identifier ('('')')?;
 

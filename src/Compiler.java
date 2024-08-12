@@ -5,7 +5,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import AST.ASTNode;
 import AST.Other.RootNode;
 import Parser.MxLexer;
 import Parser.MxParser;
@@ -36,8 +35,8 @@ public class Compiler {
       SematicChecker sematicChecker = new SematicChecker(gscope);
       sematicChecker.visit(ASTRoot);
     } catch (Tools.error.Error e) {
-      // System.err.println(e.getMessage() + " at " + e.getErrorLine().line + ":" + e.getErrorLine().charpos);
-      System.err.println(e.getMessage());
+      System.err.println(e.getMessage() + " at " + e.getErrorLine().line + ":" + e.getErrorLine().charpos);
+      // System.err.println(e.getMessage());
       System.exit(1);
     }
   }

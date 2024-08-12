@@ -221,7 +221,11 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 
   @Override
   public ASTNode visitArrayConst(ArrayConstContext ctx) {
-    return new ArrayConstExprNode(ctx);
+    ArrayConstExprNode arrayConst = new ArrayConstExprNode(ctx);
+    for (ConstTypeContext constType : ctx.constType()) {
+      arrayConst.value.add((ConstExprNode) visit(constType));
+    }
+    return arrayConst;
   }
 
   @Override
@@ -258,9 +262,15 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
   public ASTNode visitArrayInitialize(ArrayInitializeContext ctx) {
     ArrayInitializeNode arrayInitialize = new ArrayInitializeNode(new Position(ctx));
     if (ctx.arrayConst() != null) {
-      arrayInitialize.type = ((ArrayConstExprNode)visit(ctx.arrayConst())).exprType;
+      arrayInitialize.expr = ((ArrayConstExprNode)visit(ctx.arrayConst()));
+      arrayInitialize.type = arrayInitialize.expr.exprType;
     } else {
       arrayInitialize.type = Type.GetArrayDefType(ctx.type().getText(), ctx.getText());
+      for (int i = 0; i < ctx.expression().size(); i++) {
+        if (ctx.expression(i).getStop().getStopIndex() > ctx.RightBracket(i).getSymbol().getStopIndex()) {
+          throw new SyntaxError("The shape of multidimensional array must be specified from left to right", new Position(ctx.expression(i)));
+        }
+      }
       ctx.expression().forEach(
         expression -> arrayInitialize.AddSize((ExprNode) visit(expression))
       );

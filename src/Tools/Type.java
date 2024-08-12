@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.Token;
 
 import Parser.MxParser.ArrayConstContext;
 import Parser.MxParser.ConstTypeContext;
+import Tools.error.SyntaxError;
 
 public class Type {
   private String typename;
@@ -25,16 +26,22 @@ public class Type {
     } else if (c.arrayConst() != null) {
       return GetArrayConstType(c.arrayConst());
     } else {
-      throw new RuntimeException("Unknown type");
+      throw new SyntaxError("Unknown type", new Position(c));
     }
   }
 
   public static Type GetArrayConstType(ArrayConstContext c) {
-    int dim = 0;
-    for (int i = 0; i < c.constType().size(); i++) {
-      dim = Math.max(dim, GetType(c.constType(i)).dim);
+    if (c.constType().size() == 0) {
+      return new Type("null", 0);
     }
-    return new Type("array", dim + 1);
+    Type t = GetType(c.constType(0));
+    for (int i = 0; i < c.constType().size(); i++) {
+      Type tmp_t = GetType(c.constType(i));
+      if (!t.equals(tmp_t)) {
+        throw new SyntaxError("Array type mismatch", new Position(c));
+      }
+    }
+    return new Type(t.typename, t.dim + 1);
   }
 
   public static Type GetArrayDefType(String typename, String token) {
