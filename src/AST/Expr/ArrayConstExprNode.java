@@ -8,7 +8,7 @@ import Tools.Position;
 import Tools.Type;
 
 public class ArrayConstExprNode extends ExprNode {
-  public ArrayList<ExprNode> value;
+  public ArrayList<ConstExprNode> value;
   public ArrayConstExprNode(Position pos) {
     super(pos);
   }
@@ -16,7 +16,7 @@ public class ArrayConstExprNode extends ExprNode {
   public ArrayConstExprNode(ArrayConstContext ctx) {
     super(new Position(ctx));
     exprType = Type.GetArrayConstType(ctx);
-    value = new ArrayList<ExprNode>();
+    value = new ArrayList<ConstExprNode>();
     islvalue = false;
   }
 

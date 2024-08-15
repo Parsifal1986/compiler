@@ -197,7 +197,11 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 
   @Override
   public ASTNode visitConstType(ConstTypeContext ctx) {
-    return new ConstExprNode(ctx);
+    ConstExprNode constExpr = new ConstExprNode(ctx);
+    if (ctx.arrayConst() != null) {
+      constExpr.arrayConstExprNode = (ArrayConstExprNode) visit(ctx.arrayConst());
+    }
+    return constExpr;
   }
 
   @Override

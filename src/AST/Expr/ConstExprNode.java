@@ -6,6 +6,9 @@ import Tools.Position;
 import Tools.Type;
 
 public class ConstExprNode extends ExprNode {
+  public ConstTypeContext ctx;
+  public ArrayConstExprNode arrayConstExprNode;
+
   public ConstExprNode(Position pos) {
     super(pos);
   }
@@ -14,6 +17,7 @@ public class ConstExprNode extends ExprNode {
     super(new Position(ctx));
     exprType = Type.GetType(ctx);
     islvalue = false;
+    this.ctx = ctx;
   }
 
   public void accept(ASTVisitor visitor) {

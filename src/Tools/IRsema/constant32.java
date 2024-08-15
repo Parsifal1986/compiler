@@ -1,0 +1,12 @@
+package Tools.IRsema;
+
+import Tools.Entity;
+
+public class constant32 extends Entity {
+  public int value;
+
+  public constant32(int value) {
+    super("i32");
+    this.value = value;
+  }
+}

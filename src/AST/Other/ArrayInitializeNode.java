@@ -6,6 +6,7 @@ import AST.ASTNode;
 import AST.ASTVisitor;
 import AST.Expr.ArrayConstExprNode;
 import AST.Expr.ExprNode;
+import Tools.Entity;
 import Tools.Position;
 import Tools.Type;
 
@@ -13,6 +14,7 @@ public class ArrayInitializeNode extends ASTNode {
   public Type type;
   public ArrayConstExprNode expr;
   public ArrayList<ExprNode> size;
+  public Entity val;
 
   public ArrayInitializeNode(Position pos) {
     super(pos);

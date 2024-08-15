@@ -8,6 +8,7 @@ import Tools.error.SyntaxError;
 
 public class globalscope extends scope {
   public HashMap<String, Class> classes;
+  public HashMap<String, String> IRclasses;
 
   public globalscope() {
     super(null);
@@ -27,6 +28,22 @@ public class globalscope extends scope {
     ReplaceFunction("getString", new Type("string", 0), new ArrayList<>());
     ReplaceFunction("getInt", new Type("int", 0), new ArrayList<>());
     ReplaceFunction("toString", new Type("string", 0), new ArrayList<>(Arrays.asList(new Type("int", 0))));
+  }
+
+  public void Convert() {
+    IRclasses = new HashMap<>();
+    for (String keySet : classes.keySet()) {
+      String afterConvert;
+      if (keySet == "int") {
+        afterConvert = "i32";
+      } else if (keySet == "bool") {
+        afterConvert = "i8";
+      } else {
+        afterConvert = "%class." + keySet;
+      }
+      IRclasses.put(keySet, afterConvert);
+      classes.get(keySet).Convert(keySet);
+    }
   }
 
   public boolean CheckClass(String name) {

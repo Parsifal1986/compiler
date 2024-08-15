@@ -9,11 +9,26 @@ public class Class {
   public HashMap<String, Type> functions;
   public HashMap<String, Type> members;
   public HashMap<String, ArrayList<Type>> funcparams;
+  public HashMap<String, Integer> memberoffset;
+  public HashMap<String, String> functionrename;
 
   public Class() {
     functions = new HashMap<String, Type>();
     members = new HashMap<String, Type>();
     funcparams = new HashMap<String, ArrayList<Type>>();
+  }
+
+  public void Convert(String classname) {
+    memberoffset = new HashMap<String, Integer>();
+    functionrename = new HashMap<String, String>();
+    int offset = 0;
+    for (String keySet : members.keySet()) {
+      memberoffset.put(keySet, offset);
+      offset++;
+    }
+    for (String keySet : functions.keySet()) {
+      functionrename.put(keySet, classname + "::" + keySet + "()");
+    }
   }
 
   public boolean CheckFunction(String name) {

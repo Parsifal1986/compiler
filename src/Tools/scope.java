@@ -3,12 +3,14 @@ package Tools;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import Tools.IRsema.register;
 import Tools.error.SyntaxError;
 
 public class scope {
   public HashMap<String, Type> Identifier;
   public HashMap<String, Type> functions;
   public HashMap<String, ArrayList<Type>> funcparams;
+  public HashMap<String, register> rename;
   public scope parent;
   public boolean InLoop;
   public boolean InFunc;
@@ -29,6 +31,19 @@ public class scope {
     }
   }
 
+  public void AddRename(String name, register reg) {
+    rename.put(name, reg);
+  }
+
+  public register GetRename(String name) {
+    if (rename.containsKey(name)) {
+      return rename.get(name);
+    }
+    if (parent != null) {
+      return parent.GetRename(name);
+    }
+    return null;
+  }
 
   public boolean CheckIdentifier(String name) {
     if (Identifier.containsKey(name)) {

@@ -1,11 +1,13 @@
 package AST.Other;
 
+import AST.ASTNode;
 import AST.ASTVisitor;
-import AST.Stmt.StmtNode;
+import Tools.Entity;
 import Tools.Position;
 
-public class ClassInitializeNode extends StmtNode {
+public class ClassInitializeNode extends ASTNode {
   public String classname;
+  public Entity val;
 
   public ClassInitializeNode(Position pos) {
     super(pos);
