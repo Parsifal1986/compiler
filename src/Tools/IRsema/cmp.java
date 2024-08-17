@@ -1,5 +1,7 @@
 package Tools.IRsema;
 
+import java.io.PrintStream;
+
 import Tools.Entity;
 
 public class cmp extends statement {
@@ -19,7 +21,9 @@ public class cmp extends statement {
     eq, ne, slt, sgt, sle, sge
   }
 
-  public void print() {
+  @Override
+  public void print(PrintStream out) {
+    out.println(dest.tostring() + " = icmp " + op + " " + src1.type + " " + src1.tostring() + ", " + src2.tostring());
   }
   
 }

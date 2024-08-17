@@ -7,6 +7,7 @@ import Tools.Entity;
 
 abstract public class ExprNode extends ASTNode {
   public Type exprType;
+  public boolean needlvalue = false;
   public boolean islvalue = false;
   public Entity val;
 

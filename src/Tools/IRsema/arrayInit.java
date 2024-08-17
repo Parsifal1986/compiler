@@ -1,17 +1,23 @@
 package Tools.IRsema;
 
-import Tools.Entity;
+import java.io.PrintStream;
 
-public class arrayInit extends Entity {
+public class arrayInit extends statement {
+  register reg;
   int size;
   String type;
   String initialize;
 
-  public arrayInit(int size, String type, String initialize) {
-    super("ptr");
+  public arrayInit(register reg, int size, String type, String initialize) {
+    this.reg = reg;
     this.size = size;
     this.type = type;
     this.initialize = initialize;
+  }
+  
+  @Override
+  public void print(PrintStream out) {
+    out.println(reg.tostring(true) + " = alloca [" + size + " x " + type + "]");
   }
   
 }

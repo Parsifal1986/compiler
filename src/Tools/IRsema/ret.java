@@ -1,5 +1,6 @@
 package Tools.IRsema;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 import Tools.Entity;
@@ -13,11 +14,11 @@ public class ret extends control {
 
   @Override
   public ArrayList<block> next() {
-    return null;
+    return new ArrayList<block>();
   }
 
   @Override
-  public void print() {
-    
+  public void print(PrintStream out) {
+    out.println("ret " + retVal.tostring());
   }
 }

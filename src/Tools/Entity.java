@@ -6,4 +6,6 @@ abstract public class Entity {
   public Entity(String type) {
     this.type = type;
   }
+
+  abstract public String tostring();
 }

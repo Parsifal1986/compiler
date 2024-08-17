@@ -1,5 +1,6 @@
 package Tools.IRsema;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -26,8 +27,8 @@ public class branch extends control {
   }
 
   @Override
-  public void print() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'print'");
+  public void print(PrintStream out) {
+    out.println("br " + (condition == null ? "label " + trueBlock.name : condition.tostring() + ", label " + trueBlock.name
+        + ", label " + falseBlock.name));
   }
 }

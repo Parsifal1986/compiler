@@ -9,4 +9,9 @@ public class constant32 extends Entity {
     super("i32");
     this.value = value;
   }
+
+  @Override
+  public String tostring() {
+    return Integer.toString(value);
+  }
 }

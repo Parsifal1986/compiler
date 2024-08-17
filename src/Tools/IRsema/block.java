@@ -6,15 +6,19 @@ public class block {
   public String name;
   public ArrayList<statement> statements;
   public control next;
+  public static int cnt = 0;
+  public boolean isprint = false;
 
   public block newblock(String name) {
-    this.name = name;
+    this.name = name + (cnt++);
+    statements = new ArrayList<statement>();
     block tmp = new block(name);
     next = new branch(null, tmp, null);
     return tmp;
   }
 
   public block(String name) {
+    this.name = name + (cnt++);
     statements = new ArrayList<statement>();
   }
 

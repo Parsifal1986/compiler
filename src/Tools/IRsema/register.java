@@ -6,24 +6,29 @@ import Tools.Type;
 public class register extends Entity {
   public String name;
 
+  static int varcounter = 0;
+  static int avarcounter = 0;
+
   public register(String type) {
     super(type);
-    name = null;
+    name = "tmp.var" + avarcounter++;
   }
 
   public register(Type type, String name) {
-    super("");
-    if (type.getDim() != 0) {
-      this.type = "ptr";
-    } else {
-      if (type.getTypename() == "int") {
-        this.type = "i32";
-      } else if (type.getTypename() == "bool") {
-        this.type = "i8";
-      } else {
-        this.type = "ptr";
-      }
+    super(type.ToIrType());
+    if (name == null)
+      this.name = "tmp.var" + avarcounter++;
+    else {
+      this.name = name + varcounter++;
     }
-    this.name = name;
+  }
+
+  @Override
+  public String tostring() {
+    return "%" + name;
+  }
+
+  public String tostring(boolean flag) {
+    return "@" + name;
   }
 }

@@ -12,6 +12,7 @@ public class Type {
   private String typename;
   private int dim;
   public boolean isfunc = false;
+  public String funcname = null;
   public ArrayList<Type> params = null;
 
   public static Type GetType(ConstTypeContext c) {
@@ -53,6 +54,8 @@ public class Type {
     this.typename = t.typename;
     this.dim = t.dim;
     this.isfunc = t.isfunc;
+    this.funcname = t.funcname;
+    this.params = t.params;
   }
 
   public Type(String typename, int dim) {
@@ -75,6 +78,13 @@ public class Type {
   }
 
   public String getTypename() {
+    if (dim != 0) {
+      return "array" + "[]";
+    }
+    return typename;
+  }
+
+  public String getfinaltype() {
     return typename;
   }
 
@@ -96,5 +106,21 @@ public class Type {
       return true;
     }
     return typename.equals(t.typename) && dim == t.dim;
+  }
+
+  public String ToIrType() {
+    if (typename.equals("void")) {
+      return "void";
+    }
+    if (dim != 0) {
+      return "ptr";
+    }
+    if (typename.equals("int")) {
+      return "i32";
+    }
+    if (typename.equals("bool")) {
+      return "i8";
+    }
+    return "ptr";
   }
 }

@@ -40,6 +40,7 @@ import AST.Stmt.VarDefStmtNode;
 import AST.Stmt.WhileStmtNode;
 import Tools.globalscope;
 import Tools.scope;
+import Tools.IRsema.register;
 import Tools.error.SyntaxError;
 import Tools.Type;
 
@@ -175,7 +176,7 @@ public class SematicChecker implements ASTVisitor {
   
   @Override
   public void visit(VarDefStmtNode it) {
-    if (!gscope.CheckClass(it.type.getTypename())) {
+    if (!gscope.CheckClass(it.type.getfinaltype())) {
       // throw new SyntaxError("Error: Variable type is class", it.pos);
       throw new SyntaxError("Undefined Identifier", it.pos);
     }
@@ -189,6 +190,9 @@ public class SematicChecker implements ASTVisitor {
       } else {
         current_scope.AddIdentifier(init.varname, it.type, it.pos);
       }
+      register reg = new register(it.type, init.varname);
+      current_scope.AddRename(init.varname, reg);
+      init.val = reg;
     }
   }
   
@@ -225,9 +229,10 @@ public class SematicChecker implements ASTVisitor {
     current_scope.InFunc = true;
     current_scope.funcname = it.funcName;
     ArrayList<Type> funcparams = new ArrayList<Type>();
-    for (FuncDefStmtNode.ParameterList parameters : it.parameters) {
-      current_scope.AddIdentifier(parameters.name, parameters.type, it.pos);
-      funcparams.add(parameters.type);
+    for (int i = 0; i < it.parameters.size(); i++) {
+      current_scope.AddIdentifier(it.parameters.get(i).name, it.parameters.get(i).type, it.pos);
+      funcparams.add(it.parameters.get(i).type);
+      current_scope.AddRename(it.parameters.get(i).name, it.parameter_regs.get(i));
     }
     current_scope.AddFunction(it.funcName, it.retType, funcparams, it.pos);
     it.body.accept(this);
@@ -313,13 +318,16 @@ public class SematicChecker implements ASTVisitor {
   @Override
   public void visit(IdentifierExprNode it) {
     if (current_scope.CheckIdentifier(it.Id.toString())) {
+      it.val = current_scope.GetVarRename(it.Id);
       it.exprType = current_scope.GetIdentifier(it.Id.toString());
       it.islvalue = true;
     } else if (current_scope.CheckFunction(it.Id.toString())) {
       it.exprType = new Type(current_scope.GetFunctionRetType(it.Id.toString()));
       it.exprType.isfunc = true;
+      it.exprType.funcname = current_scope.GetFuncRename(it.Id.toString());
       it.islvalue = false;
       it.exprType.params = current_scope.GetFunctionParams(it.Id.toString());
+      it.val = current_scope.GetVarRename(it.Id);
     } else {
       // throw new SyntaxError("Error: Undefined identifier " + it.Id.toString(), it.pos);
       throw new SyntaxError("Undefined Identifier", it.pos);
@@ -329,6 +337,7 @@ public class SematicChecker implements ASTVisitor {
   @Override
   public void visit(FstringExprNode it) {
     for (ExprNode exprs : it.exprs) {
+      exprs.needlvalue = false;
       exprs.accept(this);
       if (exprs.exprType.getDim() > 0) {
         // throw new SyntaxError("Error: Fstring expression not string", it.pos);
@@ -349,12 +358,14 @@ public class SematicChecker implements ASTVisitor {
       it.classInitialize.accept(this);
       it.exprType = new Type(it.classInitialize.classname, 0);
     }
+    it.islvalue = true;
   }
   
   @Override
   public void visit(UnaryExprNode it) {
-    it.expr.accept(this);
     if (it.op == UnaryExprNode.Opcode.PRE_DEC || it.op == UnaryExprNode.Opcode.PRE_INC || it.op == UnaryExprNode.Opcode.SUF_DEC || it.op == UnaryExprNode.Opcode.SUF_INC) {
+      it.expr.needlvalue = true;
+      it.expr.accept(this);
       if (it.expr.islvalue == false || !it.expr.exprType.getTypename().equals("int")) {
         // throw new SyntaxError("Error: Unary expression not lvalue", it.pos);
         throw new SyntaxError("Invalid Type", it.pos);
@@ -367,6 +378,8 @@ public class SematicChecker implements ASTVisitor {
       it.exprType = new Type("int", 0);
     }
     if (it.op == UnaryExprNode.Opcode.NOT) {
+      it.expr.needlvalue = false;
+      it.expr.accept(this);
       if (!it.expr.exprType.getTypename().equals("bool") && !it.expr.exprType.getTypename().equals("int")) {
         // throw new SyntaxError("Error: Unary expression not bool or int", it.pos);
         throw new SyntaxError("Invalid Type", it.pos);
@@ -375,6 +388,8 @@ public class SematicChecker implements ASTVisitor {
       it.expr.islvalue = false;
     }
     if (it.op == UnaryExprNode.Opcode.NEG || it.op == UnaryExprNode.Opcode.BIT_NOT) {
+      it.expr.needlvalue = false;
+      it.expr.accept(this);
       if (!it.expr.exprType.getTypename().equals("int")) {
         // throw new SyntaxError("Error: Unary expression not int", it.pos);
         throw new SyntaxError("Invalid Type", it.pos);
@@ -387,6 +402,8 @@ public class SematicChecker implements ASTVisitor {
   
   @Override
   public void visit(BinaryExprNode it) {
+    it.lhs.needlvalue = false;
+    it.rhs.needlvalue = false;
     it.lhs.accept(this);
     it.rhs.accept(this);
     if (it.op == BinaryExprNode.Opcode.MUL || it.op == BinaryExprNode.Opcode.DIV ||
@@ -453,6 +470,9 @@ public class SematicChecker implements ASTVisitor {
   
   @Override
   public void visit(TernaryExprNode it) {
+    it.condition.needlvalue = false;
+    it.trueExpr.needlvalue = false;
+    it.falseExpr.needlvalue = false;
     it.condition.accept(this);
     it.trueExpr.accept(this);
     it.falseExpr.accept(this);
@@ -467,11 +487,14 @@ public class SematicChecker implements ASTVisitor {
   @Override
   public void visit(ThisExprNode it) {
     it.exprType = new Type(current_scope.GetIdentifier("This").getTypename(), 0);
+    it.val = current_scope.GetVarRename("this");
     it.islvalue = false;
   }
   
   @Override
   public void visit(AssignExprNode it) {
+    it.lhs.needlvalue = true;
+    it.rhs.needlvalue = false;
     it.lhs.accept(this);
     it.rhs.accept(this);
     if (it.lhs.islvalue == false) {
@@ -488,8 +511,9 @@ public class SematicChecker implements ASTVisitor {
   
   @Override
   public void visit(SuffixExprNode it) {
+    it.primeExpr.needlvalue = false;
     it.primeExpr.accept(this);
-    it.exprType = it.primeExpr.exprType;
+    it.exprType = new Type(it.primeExpr.exprType);
     for (SuffixContentNode suffixContent : it.suffixContent) {
       if (suffixContent.type == SuffixContentNode.SuffixType.FUNCC) {
         suffixContent.accept(this);
@@ -519,30 +543,21 @@ public class SematicChecker implements ASTVisitor {
           // throw new SyntaxError("Error: Array access on non-array", it.pos);
           throw new SyntaxError("Dimension Out Of Bound", it.pos);
         }
-        it.exprType = new Type(it.exprType.getTypename(), it.exprType.getDim() - 1);
+        it.exprType = new Type(it.exprType.getfinaltype(), it.exprType.getDim() - 1);
         it.islvalue = true;
       } else if (suffixContent.type == SuffixContentNode.SuffixType.MEMBERV) {
         if (!gscope.CheckClass(it.exprType.getTypename())) {
           // throw new SyntaxError("Error: Member access on non-class", it.pos);
           throw new SyntaxError("Invalid Type", it.pos);
         } else {
-          if (it.exprType.getDim() > 0) {
-            scope old_scope = current_scope;
-            current_scope = new scope(null);
-            current_scope.AddFunction("size", new Type("int", 0), new ArrayList<>(), it.pos);
-            suffixContent.accept(this);
-            it.exprType = suffixContent.expr.get(0).exprType;
-            it.islvalue = suffixContent.expr.get(0).islvalue;
-            current_scope = old_scope;
-            return;
-          }
           scope old_scope = current_scope;
           current_scope = new scope(null);
           current_scope.Identifier = gscope.classes.get(it.exprType.getTypename()).members;
           current_scope.functions = gscope.classes.get(it.exprType.getTypename()).functions;
           current_scope.funcparams = gscope.classes.get(it.exprType.getTypename()).funcparams;
+          current_scope.functionrename = gscope.classes.get(it.exprType.getTypename()).functionrename;
           suffixContent.accept(this);
-          it.exprType = suffixContent.expr.get(0).exprType;
+          it.exprType = new Type(suffixContent.expr.get(0).exprType);
           it.islvalue = suffixContent.expr.get(0).islvalue;
           if (it.exprType.isfunc) {
             it.islvalue = false;
@@ -556,22 +571,27 @@ public class SematicChecker implements ASTVisitor {
   @Override
   public void visit(PrimeExprNode it) {
     if (it.identifierExpr != null) {
+      it.identifierExpr.needlvalue = it.needlvalue;
       it.identifierExpr.accept(this);
       it.exprType = it.identifierExpr.exprType;
       it.islvalue = it.identifierExpr.islvalue;
     } else if (it.thisExpr != null) {
+      it.thisExpr.needlvalue = it.needlvalue;
       it.thisExpr.accept(this);
       it.exprType = it.thisExpr.exprType;
       it.islvalue = false;
     } else if (it.newExpr != null) {
+      it.newExpr.needlvalue = it.needlvalue;
       it.newExpr.accept(this);
       it.exprType = it.newExpr.exprType;
       it.islvalue = false;
     } else if (it.constExpr != null) {
+      it.constExpr.needlvalue = it.needlvalue;
       it.constExpr.accept(this);
       it.exprType = it.constExpr.exprType;
       it.islvalue = false;
     } else if (it.parenExpr != null) {
+      it.parenExpr.needlvalue = it.needlvalue;
       it.parenExpr.accept(this);
       it.exprType = it.parenExpr.exprType;
       it.islvalue = it.parenExpr.islvalue;
@@ -581,6 +601,7 @@ public class SematicChecker implements ASTVisitor {
   @Override
   public void visit(ArrayConstExprNode it) {
     for (ExprNode expr : it.value) {
+      expr.needlvalue = false;
       expr.accept(this);
     }
     int dim = 0;

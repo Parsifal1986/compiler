@@ -10,7 +10,8 @@ public class scope {
   public HashMap<String, Type> Identifier;
   public HashMap<String, Type> functions;
   public HashMap<String, ArrayList<Type>> funcparams;
-  public HashMap<String, register> rename;
+  public HashMap<String, register> varrename;
+  public HashMap<String, String> functionrename;
   public scope parent;
   public boolean InLoop;
   public boolean InFunc;
@@ -23,6 +24,8 @@ public class scope {
     this.Identifier = new HashMap<String, Type>();
     this.functions = new HashMap<String, Type>();
     this.funcparams = new HashMap<String, ArrayList<Type>>();
+    this.varrename = new HashMap<String, register>();
+    this.functionrename = new HashMap<String, String>();
     replacemode = false;
     if (parent != null) {
       this.InLoop = parent.InLoop;
@@ -32,15 +35,25 @@ public class scope {
   }
 
   public void AddRename(String name, register reg) {
-    rename.put(name, reg);
+    varrename.put(name, reg);
   }
 
-  public register GetRename(String name) {
-    if (rename.containsKey(name)) {
-      return rename.get(name);
+  public register GetVarRename(String name) {
+    if (varrename.containsKey(name)) {
+      return varrename.get(name);
     }
     if (parent != null) {
-      return parent.GetRename(name);
+      return parent.GetVarRename(name);
+    }
+    return null;
+  }
+
+  public String GetFuncRename(String name) {
+    if (functionrename.containsKey(name)) {
+      return functionrename.get(name);
+    }
+    if (parent != null) {
+      return parent.GetFuncRename(name);
     }
     return null;
   }

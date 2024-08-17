@@ -39,11 +39,10 @@ import AST.Stmt.ReturnStmtNode;
 import AST.Stmt.StmtNode;
 import AST.Stmt.VarDefStmtNode;
 import AST.Stmt.WhileStmtNode;
-import Parser.MxParser.ConstTypeContext;
+import AST.Stmt.FuncDefStmtNode.ParameterList;
 import Tools.Entity;
 import Tools.Type;
 import Tools.globalscope;
-import Tools.scope;
 import Tools.IRsema.alloca;
 import Tools.IRsema.arrayInit;
 import Tools.IRsema.assign;
@@ -57,23 +56,23 @@ import Tools.IRsema.constant8;
 import Tools.IRsema.declaration;
 import Tools.IRsema.func;
 import Tools.IRsema.getelementptr;
+import Tools.IRsema.load;
 import Tools.IRsema.register;
 import Tools.IRsema.ret;
-import Tools.error.SyntaxError;
 
 public class IRbulider implements ASTVisitor {
   globalscope gscope;
   func current_func;
-  scope current_scope;
+  ArrayList<func> functions;
   block current_block;
   block continue_to;
   block break_to;
   declaration decl;
   int cnt = 0;
   
-  public IRbulider(globalscope gscope) {
+  public IRbulider(globalscope gscope, ArrayList<func> functions) {
     this.gscope = gscope;
-    this.current_scope = gscope;
+    this.functions = functions;
     gscope.Convert();
   }
 
@@ -109,8 +108,8 @@ public class IRbulider implements ASTVisitor {
   @Override
   public void visit(ClassInitializeNode it) {
     register reg = new register("ptr");
-    current_block.add(new alloca(reg, it.classname));
-    current_block.add(new call(it.classname + "::" + it.classname + "()", reg, "ptr", new ArrayList<>(Arrays.asList(reg))));
+    current_block.add(new alloca(reg, gscope.IRclasses.get(it.classname)));
+    current_block.add(new call(it.classname + "::" + it.classname, null, "ptr", new ArrayList<>(Arrays.asList(reg))));
     it.val = reg;
   }
   
@@ -143,16 +142,13 @@ public class IRbulider implements ASTVisitor {
   
   @Override
   public void visit(BlockStmtNode it) {
-    current_scope = new scope(current_scope);
     for (StmtNode stmts : it.stmts) {
       stmts.accept(this);
     }
-    current_scope = current_scope.parent;
   }
   
   @Override
   public void visit(WhileStmtNode it) {
-    current_scope = new scope(current_scope);
     current_block = current_block.newblock("while.cond");
     continue_to = current_block; break_to = current_block;
     it.condition.accept(this);
@@ -161,12 +157,10 @@ public class IRbulider implements ASTVisitor {
     current_block = bodyBlock;
     it.stmt.accept(this);
     current_block = nextBlock;
-    current_scope = current_scope.parent;
   }
   
   @Override
   public void visit(ConditionStmtNode it) {
-    current_scope = new scope(current_scope);
     it.condition.accept(this);
     block trueBlock = new block("if.true"), falseBlock = new block("if.false"), nextBlock = new block("if.end");
     current_block.next = new branch(it.condition.val, trueBlock, falseBlock);
@@ -177,7 +171,6 @@ public class IRbulider implements ASTVisitor {
     it.falseStmt.accept(this);
     current_block.next = new branch(null, nextBlock, null);
     current_block = nextBlock;
-    current_scope = current_scope.parent;
   }
   
   @Override
@@ -188,11 +181,11 @@ public class IRbulider implements ASTVisitor {
   @Override
   public void visit(VarDefStmtNode it) {
     for (InitNode init : it.init) {
-      register reg = new register(it.type, init.varname);
-      current_func.entry.put(init.varname, reg);
-      current_scope.AddRename(init.varname, reg);
+      current_func.entry.put(init.varname, init.val);
       init.accept(this);
-      current_block.statements.add(new assign(reg, init.expr.val));
+      if (init.expr != null) {
+        current_block.statements.add(new assign(init.val, init.expr.val));
+      }
     }
   }
   
@@ -210,19 +203,28 @@ public class IRbulider implements ASTVisitor {
   
   @Override
   public void visit(FuncDefStmtNode it) {
-    current_scope = new scope(current_scope);
-    
     current_func = new func();
+    functions.add(current_func);
+    current_func.name = it.funcName;
+    current_func.type = it.retType.ToIrType();
+    for (ParameterList parameters : it.parameters) {
+      current_func.args.add(parameters.name);
+      register reg = new register(parameters.type, parameters.name);
+      current_func.entry.put(parameters.name, reg);
+    }
     current_block = new block("common");
     current_func.headblock = current_block;
     it.body.accept(this);
-
-    current_scope = current_scope.parent;
   }
   
   @Override
   public void visit(ReturnStmtNode it) {
-    current_block.next = new ret(it.expr == null ? null : it.expr.val);
+    if (it.expr != null) {
+      it.expr.accept(this);
+      current_block.next = new ret(it.expr.val);
+    } else {
+      current_block.next = new ret(null);
+    }
   }
   
   @Override
@@ -232,7 +234,6 @@ public class IRbulider implements ASTVisitor {
   
   @Override
   public void visit(ForStmtNode it) {
-    current_scope = new scope(current_scope);
     current_block = current_block.newblock("for.init");
     it.init.accept(this);
     block condBlock = new block("for.cond"), bodyBlock = new block("for.body"), nextBlock = new block("for.end");
@@ -245,17 +246,15 @@ public class IRbulider implements ASTVisitor {
     it.body.accept(this);
     current_block.next = new branch(null, condBlock, null);
     current_block = nextBlock;
-    current_scope = current_scope.parent;
   }
   
   @Override
   public void visit(ConstructFuncDefStmtNode it) {
-    current_scope = new scope(current_scope);
     current_func = new func();
+    functions.add(current_func);
     current_block = new block("common");
     current_func.headblock = current_block;
     it.block.accept(this);
-    current_scope = current_scope.parent;
   }
   
   @Override
@@ -273,8 +272,8 @@ public class IRbulider implements ASTVisitor {
     } else if (it.ctx.StringConst() != null) {
       register reg = new register(new Type("string", 0), "str");
       String content = it.ctx.StringConst().toString();
-      arrayInit arr = new arrayInit(content.length() + 1, "i8", content);
-      decl.global.add(new assign(reg, arr));
+      content = content.substring(1, content.length() - 1);
+      decl.global.add(new arrayInit(reg, content.length() + 1, "i8", content));
       it.val = reg;
     } else if (it.ctx.arrayConst() != null) {
       it.arrayConstExprNode.accept(this);
@@ -284,12 +283,43 @@ public class IRbulider implements ASTVisitor {
   
   @Override
   public void visit(IdentifierExprNode it) {
-    it.val = current_scope.GetRename(it.Id);
+    if (!it.exprType.isfunc) {
+      if (!it.needlvalue) {
+        register tmpreg = new register(it.exprType, null);
+        current_block.add(new load(tmpreg, (register)it.val));
+        it.val = tmpreg;
+      }
+    }
   }
   
   @Override
   public void visit(FstringExprNode it) {
-    
+    register tmpreg = new register("ptr");
+    for (int i = 0; i < it.exprs.size() * 2; i++) {
+      if (i % 2 == 0) {
+        register reg = new register(new Type("string", 0), "str");
+        String content = it.strings.get(i / 2);
+        content = content.substring(2, content.length() - 1);
+        decl.global.add(new arrayInit(reg, content.length() + 1, "i8", content));
+        register tmpreg2 = new register("ptr");
+        current_block.add(new call("string_add", tmpreg2, "ptr", new ArrayList<>(Arrays.asList(tmpreg, reg))));
+        tmpreg = tmpreg2;
+      } else {
+        it.exprs.get(i / 2).accept(this);
+        register tostring = new register("ptr");
+        current_block.add(new call("to_string", tostring, "ptr", new ArrayList<>(Arrays.asList(it.exprs.get(i / 2).val))));
+        register tmpreg2 = new register("ptr");
+        current_block.add(new call("string_add", tmpreg2, "ptr", new ArrayList<>(Arrays.asList(tmpreg, it.exprs.get(i / 2).val))));
+        tmpreg = tmpreg2;
+      }
+    }
+    register reg = new register(new Type("string", 0), "str");
+    String content = it.strings.get(it.strings.size() - 1);
+    content = content.substring(2, content.length() - 1);
+    decl.global.add(new arrayInit(reg, content.length() + 1, "i8", content));
+    register tmpreg2 = new register("ptr");
+    current_block.add(new call("string_add", tmpreg2, "ptr", new ArrayList<>(Arrays.asList(tmpreg, reg))));
+    it.val = tmpreg2;
   }
   
   @Override
@@ -307,7 +337,7 @@ public class IRbulider implements ASTVisitor {
   public void visit(UnaryExprNode it) {
     it.expr.accept(this);
     if (it.op == UnaryExprNode.Opcode.NOT) {
-      if (it.exprType.getTypename() == "int") {
+      if (it.exprType.getTypename().equals("int")) {
         register reg = new register("i8");
         current_block.add(new cmp(reg, it.expr.val, new constant32(0), cmp.opcode.eq));
         it.val = reg;
@@ -350,11 +380,11 @@ public class IRbulider implements ASTVisitor {
     it.lhs.accept(this);
     it.rhs.accept(this);
     if (it.op == BinaryExprNode.Opcode.ADD) {
-      if (it.lhs.exprType.getTypename() == "int") {
+      if (it.lhs.exprType.getTypename().equals("int")) {
         register reg = new register("i32");
         it.val = reg;
         current_block.add(new binary(binary.opcode.add, it.lhs.val, it.rhs.val, reg));
-      } else if (it.lhs.exprType.getTypename() == "string") {
+      } else if (it.lhs.exprType.getTypename().equals("string")) {
         register reg = new register("ptr");
         current_block.add(new call("string_add", reg, "ptr", new ArrayList<>(Arrays.asList(it.lhs.val, it.rhs.val))));
         it.val = reg;
@@ -384,41 +414,41 @@ public class IRbulider implements ASTVisitor {
       it.val = reg;
       current_block.add(new binary(binary.opcode.ashr, it.lhs.val, it.rhs.val, reg));
     } else if (it.op == BinaryExprNode.Opcode.LT) {
-      if (it.lhs.exprType.getTypename() == "int") {
+      if (it.lhs.exprType.getTypename().equals("int")) {
         register reg = new register("i8");
         it.val = reg;
         current_block.add(new cmp(reg, it.lhs.val, it.rhs.val, cmp.opcode.slt));
-      } else if (it.lhs.exprType.getTypename() == "string") {
+      } else if (it.lhs.exprType.getTypename().equals("string")) {
         register reg = new register("i8");
         current_block.add(new call("string_lt", reg, "i8", new ArrayList<>(Arrays.asList(it.lhs.val, it.rhs.val))));
         it.val = reg;
       }
     } else if (it.op == BinaryExprNode.Opcode.GT) {
-      if (it.lhs.exprType.getTypename() == "int") {
+      if (it.lhs.exprType.getTypename().equals("int")) {
         register reg = new register("i8");
         it.val = reg;
         current_block.add(new cmp(reg, it.lhs.val, it.rhs.val, cmp.opcode.sgt));
-      } else if (it.lhs.exprType.getTypename() == "string") {
+      } else if (it.lhs.exprType.getTypename().equals("string")) {
         register reg = new register("i8");
         current_block.add(new call("string_gt", reg, "i8", new ArrayList<>(Arrays.asList(it.lhs.val, it.rhs.val))));
         it.val = reg;
       }
     } else if (it.op == BinaryExprNode.Opcode.LE) {
-      if (it.lhs.exprType.getTypename() == "int") {
+      if (it.lhs.exprType.getTypename().equals("int")) {
         register reg = new register("i8");
         it.val = reg;
         current_block.add(new cmp(reg, it.lhs.val, it.rhs.val, cmp.opcode.sle));
-      } else if (it.lhs.exprType.getTypename() == "string") {
+      } else if (it.lhs.exprType.getTypename().equals("string")) {
         register reg = new register("i8");
         current_block.add(new call("string_le", reg, "i8", new ArrayList<>(Arrays.asList(it.lhs.val, it.rhs.val))));
         it.val = reg;
       }
     } else if (it.op == BinaryExprNode.Opcode.GE) {
-      if (it.lhs.exprType.getTypename() == "int") {
+      if (it.lhs.exprType.getTypename().equals("int")) {
         register reg = new register("i8");
         it.val = reg;
         current_block.add(new cmp(reg, it.lhs.val, it.rhs.val, cmp.opcode.sge));
-      } else if (it.lhs.exprType.getTypename() == "string") {
+      } else if (it.lhs.exprType.getTypename().equals("string")) {
         register reg = new register("i8");
         current_block.add(new call("string_ge", reg, "i8", new ArrayList<>(Arrays.asList(it.lhs.val, it.rhs.val))));
         it.val = reg;
@@ -469,31 +499,24 @@ public class IRbulider implements ASTVisitor {
   }
   
   @Override
-  public void visit(ThisExprNode it) {
-    it.val = current_scope.GetRename("this");
-  }
+  public void visit(ThisExprNode it) {}
   
   @Override
   public void visit(AssignExprNode it) {
     it.lhs.accept(this);
     it.rhs.accept(this);
     current_block.add(new assign((register)it.lhs.val, it.rhs.val));
+    it.val = it.rhs.val;
   }
   
   @Override
   public void visit(SuffixExprNode it) {
     it.primeExpr.accept(this);
     register reg = (register)it.primeExpr.val;
-    Type nowType = it.exprType;
-    String ptrType;
-    String funcname = new String();
+    Type nowType = it.primeExpr.exprType;
     for (SuffixContentNode suffixContent : it.suffixContent) {
-      if (it.exprType.getDim() != 0) {
-        ptrType = "[" + it.exprType.getDim() + " x" + gscope.IRclasses.get(it.exprType.getTypename()) + "]";
-      } else {
-        ptrType = gscope.IRclasses.get(it.exprType.getTypename());
-      }
       if (suffixContent.type == SuffixContentNode.SuffixType.ARRV) {
+        String ptrType = gscope.IRclasses.get(it.exprType.getTypename());
         ArrayList<Entity> index = new ArrayList<>();
         suffixContent.accept(this);
         index.add(suffixContent.expr.get(0).val);
@@ -503,16 +526,23 @@ public class IRbulider implements ASTVisitor {
         reg = newreg;
       } else if (suffixContent.type == SuffixContentNode.SuffixType.FUNCC) {
         ArrayList<Entity> args = new ArrayList<>();
+        if (reg != null) {
+          args.add(reg);
+        }
         for (ExprNode expr : suffixContent.expr) {
           expr.accept(this);
           args.add(expr.val);
         }
-        current_block.add(new call(funcname, reg, ptrType, args));
+        current_block.add(new call(nowType.funcname, reg, nowType.ToIrType(), args));
       } else if (suffixContent.type == SuffixContentNode.SuffixType.MEMBERV) {
         String id = ((IdentifierExprNode)suffixContent.expr.get(0)).Id;
         if (suffixContent.expr.get(0).exprType.isfunc) {
-          funcname = gscope.classes.get(nowType.getTypename()).functionrename.get(id);
+          String classname = nowType.getTypename();
+          nowType = new Type(gscope.classes.get(classname).functions.get(id));
+          nowType.funcname = gscope.classes.get(classname).functionrename.get(id);
+          nowType.isfunc = true;
         } else {
+          String ptrType = gscope.IRclasses.get(it.exprType.getTypename());
           ArrayList<Entity> index = new ArrayList<>();
           index.add(new constant32(gscope.classes.get(nowType.getTypename()).memberoffset.get(id)));
           register newreg = new register(gscope.IRclasses.get(it.exprType.getTypename()));
@@ -529,14 +559,24 @@ public class IRbulider implements ASTVisitor {
   public void visit(PrimeExprNode it) {
     if (it.constExpr != null) {
       it.constExpr.accept(this);
+      it.val = it.constExpr.val;
+      it.exprType = it.constExpr.exprType;
     } else if (it.identifierExpr != null) {
       it.identifierExpr.accept(this);
+      it.val = it.identifierExpr.val;
+      it.exprType = it.identifierExpr.exprType;
     } else if (it.newExpr != null) {
       it.newExpr.accept(this);
+      it.val = it.newExpr.val;
+      it.exprType = it.newExpr.exprType;
     } else if (it.thisExpr != null) {
       it.thisExpr.accept(this);
+      it.val = it.thisExpr.val;
+      it.exprType = it.thisExpr.exprType;
     } else if (it.parenExpr != null) {
       it.parenExpr.accept(this);
+      it.val = it.parenExpr.val;
+      it.exprType = it.parenExpr.exprType;
     }
   }
   

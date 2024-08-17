@@ -1,5 +1,7 @@
 package Tools.IRsema;
 
+import java.io.PrintStream;
+
 import Tools.Entity;
 
 public class assign extends statement {
@@ -11,6 +13,8 @@ public class assign extends statement {
     this.right = right;
   }
 
-  public void print() {
+  @Override
+  public void print(PrintStream out) {
+    out.println("store " + right.type + " " + right.tostring() + ", " + left.tostring());
   }
 }

@@ -9,5 +9,14 @@ public class constant8 extends Entity {
     super("i8");
     this.value = value;
   }
+
+  @Override
+  public String tostring() {
+    if (value) {
+      return "1";
+    } else {
+      return "0";
+    }
+  }
   
 }

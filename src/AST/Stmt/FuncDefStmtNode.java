@@ -2,6 +2,7 @@ package AST.Stmt;
 
 import Tools.Position;
 import Tools.Type;
+import Tools.IRsema.register;
 
 import java.util.ArrayList;
 
@@ -11,6 +12,7 @@ public class FuncDefStmtNode extends StmtNode {
   public Type retType;
   public String funcName;
   public ArrayList<ParameterList> parameters;
+  public ArrayList<register> parameter_regs;
   public BlockStmtNode body;
 
   public FuncDefStmtNode(Position pos) {

@@ -1,5 +1,7 @@
 package Tools.IRsema;
 
+import java.io.PrintStream;
+
 public class alloca extends statement {
   public register reg;
   public String type;
@@ -9,7 +11,8 @@ public class alloca extends statement {
     this.type = type;
   }
 
-  public void print() {
-
+  @Override
+  public void print(PrintStream out) {
+    out.println(reg.tostring() + " = alloca " + type);
   }
 }

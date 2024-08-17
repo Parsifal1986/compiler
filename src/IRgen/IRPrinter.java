@@ -1,28 +1,28 @@
 package IRgen;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
-import Tools.globalscope;
-import Tools.Class;
-import Tools.Type;
+import Tools.IRsema.declaration;
+import Tools.IRsema.func;
 
 public class IRPrinter {
   private PrintStream out;
+  private ArrayList<func> functons;
 
-  globalscope gscope;
+  declaration decl;
   
-  public IRPrinter(globalscope gscope, PrintStream out) {
-    this.gscope = gscope;
+  public IRPrinter(declaration decl, PrintStream out, ArrayList<func> functons) {
+    this.decl = decl;
     this.out = out;
+    this.functons = functons;
   }
 
   public void print() {
-    for (String keySet : gscope.classes.keySet()) {
-      Class c = gscope.classes.get(keySet);
-      out.print("%class." + keySet + " = type {");
-      for (Type : c.members.values()) {
-        
-      }
+    decl.print(out);
+
+    for (func functons : functons) {
+      functons.visit(out);
     }
   }
 }

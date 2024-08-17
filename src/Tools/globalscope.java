@@ -21,6 +21,9 @@ public class globalscope extends scope {
     stringClass.AddFunction("parseInt", new Type("int", 0), new Position(0, 0), new ArrayList<>());
     stringClass.AddFunction("ord", new Type("int", 0), new Position(0, 0), new ArrayList<>(Arrays.asList(new Type("int", 0))));
     classes.put("string", stringClass);
+    Class arrayClaass = new Class();
+    arrayClaass.AddFunction("size", new Type("int", 0), new Position(0, 0), new ArrayList<>());
+    classes.put("array[]", arrayClaass);
     ReplaceFunction("print", new Type("void", 0), new ArrayList<>(Arrays.asList(new Type("string", 0))));
     ReplaceFunction("println", new Type("void", 0), new ArrayList<>(Arrays.asList(new Type("string", 0))));
     ReplaceFunction("printInt", new Type("void", 0), new ArrayList<>(Arrays.asList(new Type("int", 0))));
@@ -44,6 +47,9 @@ public class globalscope extends scope {
       IRclasses.put(keySet, afterConvert);
       classes.get(keySet).Convert(keySet);
     }
+    functions.keySet().forEach(name -> {
+      functionrename.put(name, name);
+    });
   }
 
   public boolean CheckClass(String name) {

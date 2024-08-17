@@ -11,6 +11,7 @@ public class Class {
   public HashMap<String, ArrayList<Type>> funcparams;
   public HashMap<String, Integer> memberoffset;
   public HashMap<String, String> functionrename;
+  public ArrayList<Type> vtable;
 
   public Class() {
     functions = new HashMap<String, Type>();
@@ -21,13 +22,15 @@ public class Class {
   public void Convert(String classname) {
     memberoffset = new HashMap<String, Integer>();
     functionrename = new HashMap<String, String>();
+    vtable = new ArrayList<Type>();
     int offset = 0;
     for (String keySet : members.keySet()) {
+      vtable.add(members.get(keySet));
       memberoffset.put(keySet, offset);
       offset++;
     }
     for (String keySet : functions.keySet()) {
-      functionrename.put(keySet, classname + "::" + keySet + "()");
+      functionrename.put(keySet, classname + "::" + keySet);
     }
   }
 
