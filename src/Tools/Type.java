@@ -119,7 +119,7 @@ public class Type {
       return "i32";
     }
     if (typename.equals("bool")) {
-      return "i8";
+      return "i1";
     }
     return "ptr";
   }

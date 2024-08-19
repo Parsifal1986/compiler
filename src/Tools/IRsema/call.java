@@ -20,10 +20,10 @@ public class call extends statement {
 
   @Override
   public void print(PrintStream out) {
-    if (res != null) {
-      out.print(res.tostring() + " = call " + retType + " " + funcname + "(");
+    if (res != null && retType != "void") {
+      out.print(res.tostring() + " = call " + retType + " @" + funcname + "(");
     } else {
-      out.print("call " + retType + " " + funcname + "(");
+      out.print("call " + retType + " " + "@" + funcname + "(");
     }
     for (int i = 0; i < args.size(); i++) {
       out.print(args.get(i).type + " " + args.get(i).tostring());

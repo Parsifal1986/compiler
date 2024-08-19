@@ -10,8 +10,6 @@ public class block {
   public boolean isprint = false;
 
   public block newblock(String name) {
-    this.name = name + (cnt++);
-    statements = new ArrayList<statement>();
     block tmp = new block(name);
     next = new branch(null, tmp, null);
     return tmp;

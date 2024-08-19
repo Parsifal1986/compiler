@@ -19,6 +19,6 @@ public class ret extends control {
 
   @Override
   public void print(PrintStream out) {
-    out.println("ret " + retVal.tostring());
+    out.println("ret " + retVal.type + " " + retVal.tostring());
   }
 }

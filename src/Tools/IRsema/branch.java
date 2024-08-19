@@ -28,7 +28,7 @@ public class branch extends control {
 
   @Override
   public void print(PrintStream out) {
-    out.println("br " + (condition == null ? "label " + trueBlock.name : condition.tostring() + ", label " + trueBlock.name
-        + ", label " + falseBlock.name));
+    out.println("br " + (condition == null ? "label %" + trueBlock.name : "i1 " + condition.tostring() + ", label %" + trueBlock.name
+        + ", label %" + falseBlock.name));
   }
 }

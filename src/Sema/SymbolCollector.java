@@ -80,6 +80,7 @@ public class SymbolCollector implements ASTVisitor {
     } else if (it.classDef != null) {
       it.classDef.accept(this);
       Class classdef = new Class();
+      classdef.name = it.classDef.classname;
       for (VarDefStmtNode vardefs : it.classDef.vardefs) {
         if (gscope.CheckClass(vardefs.type.getTypename())) {
           for (InitNode init : vardefs.init) {

@@ -23,11 +23,12 @@ import Tools.IRsema.func;
 public class Compiler {
   public static void main(String[] args) throws Exception {
     try {
-      String filename = "test.mx";
-      InputStream input = new FileInputStream(filename);
-      // InputStream input = System.in;
-      String IRoutput = "test.ll";
-      PrintStream output = new PrintStream(IRoutput);
+      // String filename = "test.mx";
+      // InputStream input = new FileInputStream(filename);
+      // String IRoutput = "test.ll";
+      // PrintStream output = new PrintStream(IRoutput);
+      InputStream input = System.in;
+      PrintStream output = System.out;
       MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
       lexer.removeErrorListeners();
       lexer.addErrorListener(new MxErrorListener());
@@ -45,13 +46,13 @@ public class Compiler {
       sematicChecker.visit(ASTRoot);
       declaration decl = new declaration(gscope);
       ArrayList<func> functons = new ArrayList<func>();
-      IRbulider irbulider = new IRbulider(gscope, functons);
+      IRbulider irbulider = new IRbulider(gscope, functons, decl);
       irbulider.visit(ASTRoot);
       IRPrinter irPrinter = new IRPrinter(decl, output, functons);
       irPrinter.print();
     } catch (Tools.error.Error e) {
-      System.err.println(e.getMessage() + " at " + e.getErrorLine().line + ":" + e.getErrorLine().charpos);
-      // System.out.println(e.getMessage());
+      // System.err.println(e.getMessage() + " at " + e.getErrorLine().line + ":" + e.getErrorLine().charpos);
+      System.out.println(e.getMessage());
       System.exit(1);
     }
   }

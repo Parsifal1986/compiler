@@ -6,12 +6,18 @@ import java.util.HashMap;
 import Tools.error.SyntaxError;
 
 public class Class {
+  public String name;
   public HashMap<String, Type> functions;
   public HashMap<String, Type> members;
   public HashMap<String, ArrayList<Type>> funcparams;
   public HashMap<String, Integer> memberoffset;
   public HashMap<String, String> functionrename;
   public ArrayList<Type> vtable;
+  public int size = 0;
+
+  public int size() {
+    return size;
+  }
 
   public Class() {
     functions = new HashMap<String, Type>();
@@ -19,7 +25,7 @@ public class Class {
     funcparams = new HashMap<String, ArrayList<Type>>();
   }
 
-  public void Convert(String classname) {
+  public void Convert() {
     memberoffset = new HashMap<String, Integer>();
     functionrename = new HashMap<String, String>();
     vtable = new ArrayList<Type>();
@@ -29,8 +35,17 @@ public class Class {
       memberoffset.put(keySet, offset);
       offset++;
     }
+    for (Type vtable : vtable) {
+      if (vtable.ToIrType() == "i32") {
+        size += 32;
+      } else if (vtable.ToIrType() == "i1") {
+        size += 1;
+      } else {
+        size += 32;
+      }
+    }
     for (String keySet : functions.keySet()) {
-      functionrename.put(keySet, classname + "::" + keySet);
+      functionrename.put(keySet, name + "." + keySet);
     }
   }
 

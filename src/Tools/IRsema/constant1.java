@@ -2,11 +2,11 @@ package Tools.IRsema;
 
 import Tools.Entity;
 
-public class constant8 extends Entity {
+public class constant1 extends Entity {
   public boolean value;
 
-  public constant8(boolean value) {
-    super("i8");
+  public constant1(boolean value) {
+    super("i1");
     this.value = value;
   }
 

@@ -190,7 +190,12 @@ public class SematicChecker implements ASTVisitor {
       } else {
         current_scope.AddIdentifier(init.varname, it.type, it.pos);
       }
-      register reg = new register(it.type, init.varname);
+      register reg;
+      if (current_scope == gscope) {
+        reg = new register("ptr", init.varname, true);
+      } else {
+        reg = new register("ptr", init.varname, false);
+      }
       current_scope.AddRename(init.varname, reg);
       init.val = reg;
     }
@@ -232,7 +237,9 @@ public class SematicChecker implements ASTVisitor {
     for (int i = 0; i < it.parameters.size(); i++) {
       current_scope.AddIdentifier(it.parameters.get(i).name, it.parameters.get(i).type, it.pos);
       funcparams.add(it.parameters.get(i).type);
-      current_scope.AddRename(it.parameters.get(i).name, it.parameter_regs.get(i));
+      register reg = new register(it.parameters.get(i).type, it.parameters.get(i).name, false);
+      it.parameter_regs.add(reg);
+      current_scope.AddRename(it.parameters.get(i).name, reg);
     }
     current_scope.AddFunction(it.funcName, it.retType, funcparams, it.pos);
     it.body.accept(this);
@@ -327,7 +334,6 @@ public class SematicChecker implements ASTVisitor {
       it.exprType.funcname = current_scope.GetFuncRename(it.Id.toString());
       it.islvalue = false;
       it.exprType.params = current_scope.GetFunctionParams(it.Id.toString());
-      it.val = current_scope.GetVarRename(it.Id);
     } else {
       // throw new SyntaxError("Error: Undefined identifier " + it.Id.toString(), it.pos);
       throw new SyntaxError("Undefined Identifier", it.pos);

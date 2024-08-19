@@ -8,4 +8,14 @@ abstract public class Entity {
   }
 
   abstract public String tostring();
+
+  public int size() {
+    if (type == "i32") {
+      return 4;
+    } else if (type == "i8") {
+      return 1;
+    } else {
+      return 8;
+    }
+  }
 }

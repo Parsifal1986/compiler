@@ -15,6 +15,6 @@ public class assign extends statement {
 
   @Override
   public void print(PrintStream out) {
-    out.println("store " + right.type + " " + right.tostring() + ", " + left.tostring());
+    out.println("store " + right.type + " " + right.tostring() + ", " + left.type + " "+ left.tostring());
   }
 }
