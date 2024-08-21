@@ -464,32 +464,36 @@ public class IRbulider implements ASTVisitor {
   
   @Override
   public void visit(FstringExprNode it) {
-    register tmpreg = new register("ptr");
-    for (int i = 0; i < it.exprs.size() * 2; i++) {
-      if (i % 2 == 0) {
-        register reg = new register(new Type("string", 0), ".str", true);
-        String content = it.strings.get(i / 2);
-        content = content.substring(2, content.length() - 1);
-        decl.global.add(new stringconst(reg, content.length() + 1, "i8", content));
-        register tmpreg2 = new register("ptr");
-        currentBlock.add(new call("string.add", tmpreg2, "ptr", new ArrayList<>(Arrays.asList(tmpreg, reg))));
-        tmpreg = tmpreg2;
-      } else {
-        it.exprs.get(i / 2).accept(this);
-        register tostring = new register("ptr");
-        currentBlock.add(new call("to_string", tostring, "ptr", new ArrayList<>(Arrays.asList(it.exprs.get(i / 2).val))));
-        register tmpreg2 = new register("ptr");
-        currentBlock.add(new call("string.add", tmpreg2, "ptr", new ArrayList<>(Arrays.asList(tmpreg, it.exprs.get(i / 2).val))));
-        tmpreg = tmpreg2;
-      }
-    }
+    register currentReg;
     register reg = new register(new Type("string", 0), ".str", true);
-    String content = it.strings.get(it.strings.size() - 1);
-    content = content.substring(2, content.length() - 1);
-    decl.global.add(new stringconst(reg, content.length() + 1, "i8", content));
-    register tmpreg2 = new register("ptr");
-    currentBlock.add(new call("string.add", tmpreg2, "ptr", new ArrayList<>(Arrays.asList(tmpreg, reg))));
-    it.val = tmpreg2;
+    String headcontent = it.strings.get(0);
+    headcontent = headcontent.substring(2, headcontent.length() - 1);
+    headcontent = headcontent.replace("\\n", "\n").replace("\\t", "\t").replace("\\\"", "\\22").replace("$$", "$");
+    int headlength = headcontent.replace("\\22", "\"").replace("\\\\", "\\").length();
+    decl.global.add(new stringconst(reg, headlength + 1, "i8", headcontent));
+    currentReg = reg;
+    for (int i = 0; i < it.exprs.size(); i++) {
+      it.exprs.get(i).accept(this);
+      register tostring = new register("ptr");
+      if (it.exprs.get((i)).val.type.equals("i1")) {
+        currentBlock.add(new call("booltoString", tostring, "ptr", new ArrayList<>(Arrays.asList(it.exprs.get(i).val))));
+      } else {
+        currentBlock.add(new call("toString", tostring, "ptr", new ArrayList<>(Arrays.asList(it.exprs.get(i).val))));
+      }
+      register tmpString = new register("ptr");
+      currentBlock.add(new call("string.add", tmpString, "ptr", new ArrayList<>(Arrays.asList(currentReg, tostring))));
+      currentReg = tmpString;
+      register bodyRegister = new register(new Type("string", 0), ".str", true);
+      String bodyContent = it.strings.get(i + 1);
+      bodyContent = bodyContent.substring(1, bodyContent.length() - 1);
+      bodyContent = bodyContent.replace("\\n", "\n").replace("\\t", "\t").replace("\\\"", "\\22").replace("$$", "$");
+      int length = bodyContent.replace("\\22", "\"").replace("\\\\", "\\").length();
+      decl.global.add(new stringconst(bodyRegister, length + 1, "i8", bodyContent));
+      register newString = new register("ptr");
+      currentBlock.add(new call("string.add", newString, "ptr", new ArrayList<>(Arrays.asList(currentReg, bodyRegister))));
+      currentReg = newString;
+    }
+    it.val = currentReg;
   }
   
   @Override
@@ -855,14 +859,19 @@ public class IRbulider implements ASTVisitor {
     constant32 size = new constant32(it.value.size());
     ArrayList<Entity> args = new ArrayList<>();
     args.add(size);
-    for (ConstExprNode constType : it.value) {
-      constType.accept(this);
-      args.add(constType.val);
+    String nextLevelType = it.value.get(0).exprType.ToIrType();
+    if (nextLevelType.equals("i1")) {
+      args.add(new constant32(1));
+    } else {
+      args.add(new constant32(4));
     }
     currentBlock.add(new call("newarray", reg, "ptr", args));
-    it.val = reg;
-    for (ConstExprNode value : it.value) {
-      value.accept(this);
+    for (int i = 0; i < it.value.size(); i++) {
+      it.value.get(i).accept(this);
+      register newreg = new register("ptr");
+      currentBlock.add(new getelementptr(nextLevelType.equals("i1") ? "i8" : nextLevelType, newreg, reg, new ArrayList<>(Arrays.asList(new constant32(i)))));
+      currentBlock.add(new assign(newreg, it.value.get(i).val));
     }
+    it.val = reg;
   }
 }

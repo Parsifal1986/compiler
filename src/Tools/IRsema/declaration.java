@@ -58,6 +58,7 @@ public class declaration {
     out.println("declare ptr @newarray(i32, i32)");
     out.println("declare i32 @_array.size(ptr)");
     out.println("declare ptr @malloc(i32)");
+    out.println("declare ptr @booltoString(i1)");
     out.println();
     // for (String keySet : gscope.functions.keySet()) {
     //   out.print("declare " + gscope.functions.get(keySet).ToIrType() + " @" + gscope.functionrename.get(keySet) + "(");

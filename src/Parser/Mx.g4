@@ -184,7 +184,7 @@ condition: If '(' conditionExp = expression ')' trueStmt = statement (Else false
 
 whileRule: While '(' conditionExp = expression ')' Stmt = statement;
 
-forRule: For '(' (initExpr = expression)? ';' (condExpr = expression)? ';' (stepExpr = expression)? ')' statement;
+forRule: For '(' (initStmt = statement)? (condExpr = expression)? ';' (stepExpr = expression)? ')' forbody = statement;
 
 breakRule: Break;
 

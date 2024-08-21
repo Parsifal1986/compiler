@@ -427,8 +427,8 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
   @Override
   public ASTNode visitForRule(ForRuleContext ctx) {
     ForStmtNode forStmt = new ForStmtNode(new Position(ctx));
-    if (ctx.initExpr != null) {
-      forStmt.init = (ExprNode) visit(ctx.initExpr);
+    if (ctx.initStmt != null) {
+      forStmt.init = (StmtNode) visit(ctx.initStmt);
     }
     if (ctx.condExpr != null) {
       forStmt.cond = (ExprNode) visit(ctx.condExpr);
@@ -436,7 +436,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     if (ctx.stepExpr != null) {
       forStmt.step = (ExprNode) visit(ctx.stepExpr);
     }
-    forStmt.body = (StmtNode) visit(ctx.statement());
+    forStmt.body = (StmtNode) visit(ctx.forbody);
 
     return forStmt;
   }

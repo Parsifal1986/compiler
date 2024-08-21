@@ -5,7 +5,8 @@ import AST.Expr.ExprNode;
 import Tools.Position;
 
 public class ForStmtNode extends StmtNode {
-  public ExprNode init, cond, step;
+  public StmtNode init;
+  public ExprNode cond, step;
   public StmtNode body;
 
   public ForStmtNode(Position pos) {
