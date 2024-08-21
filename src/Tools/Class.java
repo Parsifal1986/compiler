@@ -25,7 +25,7 @@ public class Class {
     funcparams = new HashMap<String, ArrayList<Type>>();
   }
 
-  public void Convert() {
+  public void  Convert() {
     memberoffset = new HashMap<String, Integer>();
     functionrename = new HashMap<String, String>();
     vtable = new ArrayList<Type>();
@@ -35,15 +35,7 @@ public class Class {
       memberoffset.put(keySet, offset);
       offset++;
     }
-    for (Type vtable : vtable) {
-      if (vtable.ToIrType() == "i32") {
-        size += 32;
-      } else if (vtable.ToIrType() == "i1") {
-        size += 1;
-      } else {
-        size += 32;
-      }
-    }
+    size = vtable.size() * 4;
     for (String keySet : functions.keySet()) {
       functionrename.put(keySet, name + "." + keySet);
     }

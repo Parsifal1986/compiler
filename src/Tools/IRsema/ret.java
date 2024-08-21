@@ -19,6 +19,10 @@ public class ret extends control {
 
   @Override
   public void print(PrintStream out) {
+    if (retVal == null) {
+      out.println("ret void");
+      return;
+    }
     out.println("ret " + retVal.type + " " + retVal.tostring());
   }
 }

@@ -23,6 +23,7 @@ public class IRPrinter {
 
     for (func functons : functons) {
       functons.visit(out);
+      out.println();
     }
   }
 }

@@ -79,7 +79,7 @@ public class Type {
 
   public String getTypename() {
     if (dim != 0) {
-      return "array" + "[]";
+      return "_array";
     }
     return typename;
   }

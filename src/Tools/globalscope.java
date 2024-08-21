@@ -40,6 +40,14 @@ public class globalscope extends scope {
     ReplaceFunction("toString", new Type("string", 0), new ArrayList<>(Arrays.asList(new Type("int", 0))));
   }
 
+  public String GetIRClass(Type type) {
+    if (type.getDim() > 0) {
+      return "ptr";
+    } else {
+      return IRclasses.get(type.getfinaltype());
+    }
+  }
+
   public void Convert() {
     IRclasses = new HashMap<>();
     for (String keySet : classes.keySet()) {
@@ -48,17 +56,21 @@ public class globalscope extends scope {
         afterConvert = "i32";
       } else if (keySet == "bool") {
         afterConvert = "i1";
-      } else if (keySet == "_array") {
+      } else if (keySet == "_array" || keySet == "string") {
         afterConvert = "ptr";
-      }else {
+      } else {
         afterConvert = "%class." + keySet;
       }
       IRclasses.put(keySet, afterConvert);
       classes.get(keySet).Convert();
     }
-    functions.keySet().forEach(name -> {
-      functionrename.put(name, name);
-    });
+    for (String keySet : functions.keySet()) {
+      if (!keySet.equals("main") && !keySet.equals("print") && !keySet.equals("println") && !keySet.equals("printInt") && !keySet.equals("printlnInt") && !keySet.equals("getString") && !keySet.equals("getInt") && !keySet.equals("toString")) {
+        functionrename.put(keySet, "." + keySet);
+      } else {
+        functionrename.put(keySet, keySet);
+      }
+    }
   }
 
   public boolean CheckClass(String name) {

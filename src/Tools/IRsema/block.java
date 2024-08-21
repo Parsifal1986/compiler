@@ -16,6 +16,10 @@ public class block {
   }
 
   public block(String name) {
+    if (name == null) {
+      statements = new ArrayList<>();
+      return;
+    }
     this.name = name + (cnt++);
     statements = new ArrayList<statement>();
   }

@@ -64,9 +64,9 @@ int string_length(char *str) {
   return strlen(str);
 }
 
-char* string_substring(char *str, int left, int right) {
-  char *sub = (char*) malloc((right - left + 2) * sizeof(char));
-  int len = right - left + 1;
+char *string_substring(int left, int right, char *str) {
+  char *sub = (char*) malloc((right - left + 1) * sizeof(char));
+  int len = right - left;
   for (int i = 0; i < len; i++) {
     sub[i] = str[left + i];
   }
@@ -80,7 +80,7 @@ int string_parseInt(char *str) {
   return num;
 }
 
-int string_ord(char *str, int pos) {
+int string_ord(int pos, char *str) {
   return str[pos];
 }
 
@@ -114,8 +114,8 @@ char* string_add(char *str1, char *str2) {
   return str;
 }
 
-void* new_array(int size) {
-  void *arr = malloc(sizeof(int) + size);
+void* newarray(int size, int type_size) {
+  void *arr = malloc(sizeof(int) + size * type_size);
   *(int*)arr = size;
   return (char*)arr + sizeof(int);
 }

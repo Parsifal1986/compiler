@@ -9,11 +9,21 @@ public class func {
   public String name;
   public String type;
   public ArrayList<String> args;
-  public ArrayList<register> entry;
+  public ArrayList<EntryPair> entry;
   public block headblock;
 
+  public static class EntryPair {
+    public register reg;
+    public String type;
+
+    public EntryPair(register reg, String type) {
+      this.reg = reg;
+      this.type = type;
+    }
+  }
+
   public func() {
-    entry = new ArrayList<register>();
+    entry = new ArrayList<>();
     args = new ArrayList<String>();
   }
 
@@ -22,8 +32,10 @@ public class func {
     if (entry.size() > 0) {
       out.println("entry:");
       entry.forEach(
-        reg -> out.println("\t" + reg.tostring() + " = alloca " + reg.type)
+        e -> out.println("\t" + e.reg.tostring() + " = alloca " + e.type)
       );
+      out.print("\t");
+      (new branch(null, headblock, null)).print(out);
     }
     Queue<block> q = new LinkedList<block>();
     q.add(headblock);
@@ -45,7 +57,7 @@ public class func {
         current.next.print(out);
         current.next.next().forEach(q::add);  
       } else {
-        if (name == "main") {
+        if (name.equals("main")) {
           out.println("\tret i32 0");
         } else {
           out.println("\tret void");

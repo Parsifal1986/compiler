@@ -82,7 +82,7 @@ public class SymbolCollector implements ASTVisitor {
       Class classdef = new Class();
       classdef.name = it.classDef.classname;
       for (VarDefStmtNode vardefs : it.classDef.vardefs) {
-        if (gscope.CheckClass(vardefs.type.getTypename())) {
+        if (gscope.CheckClass(vardefs.type.getfinaltype())) {
           for (InitNode init : vardefs.init) {
             classdef.AddMember(init.varname, vardefs.type, vardefs.pos);
           }
@@ -92,7 +92,7 @@ public class SymbolCollector implements ASTVisitor {
         }
       }
       for (FuncDefStmtNode funcdefs : it.classDef.funcdefs) {
-        if (funcdefs.retType.getTypename().equals("void") || gscope.CheckClass(funcdefs.retType.getTypename())) {
+        if (funcdefs.retType.getfinaltype().equals("void") || gscope.CheckClass(funcdefs.retType.getfinaltype())) {
           ArrayList<Type> funcparams = new ArrayList<Type>();
           for (FuncDefStmtNode.ParameterList parameters : funcdefs.parameters) {
             funcparams.add(parameters.type);

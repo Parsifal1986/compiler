@@ -212,18 +212,20 @@ public class SematicChecker implements ASTVisitor {
     current_scope.functions = gscope.classes.get(it.classname).functions;
     current_scope.Identifier = gscope.classes.get(it.classname).members;
     current_scope.funcparams = gscope.classes.get(it.classname).funcparams;
-    current_scope.Identifier.put("This", new Type(it.classname, 0));
+    current_scope.functionrename = gscope.classes.get(it.classname).functionrename;
+    // current_scope.Identifier.put("This", new Type(it.classname, 0));
     current_scope.replacemode = true;
     for (VarDefStmtNode vardefs : it.vardefs) {
       vardefs.accept(this);
     }
     for (FuncDefStmtNode funcdefs : it.funcdefs) {
+      funcdefs.parameters.add(new FuncDefStmtNode.ParameterList(new Type(it.classname, 0), "This"));
       funcdefs.accept(this);
     }
     if (it.constructfuncdef != null) {
       it.constructfuncdef.accept(this);
     }
-    current_scope.Identifier.remove("This");
+    // current_scope.Identifier.remove("This");
     current_scope.replacemode = false;
     current_scope = current_scope.parent;
   }
@@ -233,13 +235,17 @@ public class SematicChecker implements ASTVisitor {
     current_scope = new scope(current_scope);
     current_scope.InFunc = true;
     current_scope.funcname = it.funcName;
-    ArrayList<Type> funcparams = new ArrayList<Type>();
+    ArrayList<Type> funcparams = current_scope.GetFunctionParams(it.funcName);
     for (int i = 0; i < it.parameters.size(); i++) {
       current_scope.AddIdentifier(it.parameters.get(i).name, it.parameters.get(i).type, it.pos);
-      funcparams.add(it.parameters.get(i).type);
-      register reg = new register(it.parameters.get(i).type, it.parameters.get(i).name, false);
-      it.parameter_regs.add(reg);
-      current_scope.AddRename(it.parameters.get(i).name, reg);
+      register para = new register(it.parameters.get(i).type, it.parameters.get(i).name, false);
+      register reg = new register("ptr", it.parameters.get(i).name + ".addr", false);
+      it.AddReflection(para, reg);
+      if (it.parameters.get(i).name.equals("This")) {
+        current_scope.AddRename(it.parameters.get(i).name, para);
+      } else {
+        current_scope.AddRename(it.parameters.get(i).name, reg);
+      }
     }
     current_scope.AddFunction(it.funcName, it.retType, funcparams, it.pos);
     it.body.accept(this);
@@ -309,6 +315,11 @@ public class SematicChecker implements ASTVisitor {
     current_scope.InFunc = true;
     current_scope.funcname = it.classname;
     current_scope.AddFunction(it.classname, new Type("void", 0), new ArrayList<>(), it.pos);
+    Type classType = new Type(it.classname, 0);
+    current_scope.Identifier.put("This", classType);
+    it.Thisorigin = new register(classType.ToIrType(), "This", false);
+    it.Thisaddr = new register("ptr", "This.addr", false);
+    current_scope.AddRename("This", it.Thisorigin);
     it.block.accept(this);
     current_scope.hasreturn = false;
     current_scope.InFunc = false;
@@ -493,7 +504,7 @@ public class SematicChecker implements ASTVisitor {
   @Override
   public void visit(ThisExprNode it) {
     it.exprType = new Type(current_scope.GetIdentifier("This").getTypename(), 0);
-    it.val = current_scope.GetVarRename("this");
+    it.val = current_scope.GetVarRename("This");
     it.islvalue = false;
   }
   
