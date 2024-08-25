@@ -3,6 +3,8 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import org.antlr.v4.runtime.CharStreams;
@@ -33,7 +35,8 @@ public class Compiler {
       // InputStream input = new FileInputStream(filename);
       // String IRoutput = "test.ll";
       // PrintStream output = new PrintStream(IRoutput);
-      String filepath = "src/Tools/buildin/builtin.s";
+      String currentFile = System.getProperty("user.dir");
+      Path filePath = Paths.get(currentFile, "src/Tools/buildin/builtin.s");
       InputStream input = System.in;
       PrintStream output = System.out;
       MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
@@ -64,7 +67,7 @@ public class Compiler {
       asmTranslator.trans();
       ASMPrinter asmPrinter = new ASMPrinter(sections);
       asmPrinter.print(output);
-      BufferedReader br = new BufferedReader(new FileReader(filepath));
+      BufferedReader br = new BufferedReader(new FileReader(filePath.toAbsolutePath().toString()));
       String line;
       while ((line = br.readLine()) != null) {
         output.println(line);
