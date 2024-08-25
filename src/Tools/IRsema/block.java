@@ -8,6 +8,8 @@ public class block {
   public control next;
   public static int cnt = 0;
   public boolean isprint = false;
+  public boolean istrans = false;
+  public boolean isclean = false;
 
   public block newblock(String name) {
     block tmp = new block(name);

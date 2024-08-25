@@ -1,8 +1,12 @@
 package Tools.IRsema;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 import Tools.Entity;
+import Tools.RISCVsema.command;
+import Tools.RISCVsema.operand.phyreg;
+import codegen.RegAlloca;
 
 public class trans extends statement {
   public register dst;
@@ -16,5 +20,14 @@ public class trans extends statement {
   @Override
   public void print(PrintStream out) {
     out.println(dst.tostring() + " = " + "trunc " + src.type + " " + src.tostring() + " to " + dst.type);
+  }
+
+  @Override
+  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+    ArrayList<command> ret = new ArrayList<>();
+    phyreg r0 = regAlloc.GetPhyReg("t0");
+    ret.addAll(regAlloc.LoadToPhyReg(r0, src));
+    ret.addAll(regAlloc.StorePhyReg(r0, regAlloc.GetVirtReg(dst)));
+    return ret;
   }
 }

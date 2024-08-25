@@ -4,6 +4,11 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import Tools.Class;
 import Tools.globalscope;
+import Tools.RISCVsema.operand.immtag;
+import Tools.RISCVsema.section.asmsection;
+import Tools.RISCVsema.section.bsssection;
+import Tools.RISCVsema.section.datasection;
+import Tools.RISCVsema.section.rodatasection;
 
 public class declaration {
   globalscope gscope;
@@ -92,5 +97,25 @@ public class declaration {
       s.print(out);
     }
     out.println();
+  }
+
+  public ArrayList<asmsection> trans() {
+    ArrayList<asmsection> res = new ArrayList<asmsection>();
+    for (statement s : global) {
+      if (s instanceof stringconst) {
+        stringconst sc = (stringconst)s;
+        rodatasection rodata = new rodatasection(sc.initialize, ".L" + sc.reg.name, false);
+        datasection data = new datasection(new immtag(".L" + sc.reg.name, immtag.range.FULL), sc.reg.name, true, datasection.classtype.WORD);
+        res.add(rodata);
+        res.add(data);
+      } else if (s instanceof globalvar) {
+        globalvar gv = (globalvar)s;
+        bsssection bss = new bsssection(gv.type.equals("i1") ? 1 : 4, ".D" + gv.reg.name, true);
+        datasection data = new datasection(new immtag(".D" + gv.reg.name, immtag.range.FULL), gv.reg.name, true, datasection.classtype.WORD);
+        res.add(bss);
+        res.add(data);
+      }
+    }
+    return res;
   }
 }

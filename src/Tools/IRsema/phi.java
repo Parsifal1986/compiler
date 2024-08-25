@@ -1,8 +1,11 @@
 package Tools.IRsema;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 import Tools.Entity;
+import Tools.RISCVsema.command;
+import codegen.RegAlloca;
 
 public class phi extends statement {
   public register dst;
@@ -22,5 +25,10 @@ public class phi extends statement {
   @Override
   public void print(PrintStream out) {
     out.println(dst.tostring() + " = phi " + dst.type + " [" + src1.tostring() + ", %" + label1 + "], [" + src2.tostring() + ", %" + label2 + "]");
+  }
+
+  @Override
+  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+    return null;
   }
 }

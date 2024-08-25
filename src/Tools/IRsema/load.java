@@ -1,6 +1,13 @@
 package Tools.IRsema;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
+
+import Tools.RISCVsema.command;
+import Tools.RISCVsema.memory_i;
+import Tools.RISCVsema.operand.immnum;
+import Tools.RISCVsema.operand.phyreg;
+import codegen.RegAlloca;
 
 public class load extends statement {
   register reg;
@@ -14,5 +21,15 @@ public class load extends statement {
   @Override
   public void print(PrintStream out) {
     out.println(reg.tostring() + " = load " + reg.type + ", " + addr.type + " " + addr.tostring());
+  }
+
+  @Override
+  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+    ArrayList<command> ret = new ArrayList<>();
+    phyreg r0 = regAlloc.GetPhyReg("t0"), r1 = regAlloc.GetPhyReg("t1");
+    ret.addAll(regAlloc.LoadToPhyReg(r1, addr));
+    ret.add(new memory_i(r0, r1, new immnum(0), memory_i.Opcode.LW));
+    ret.addAll(regAlloc.StorePhyReg(r0, regAlloc.GetVirtReg(reg)));
+    return ret;
   }
 }

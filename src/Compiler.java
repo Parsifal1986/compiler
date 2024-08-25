@@ -19,6 +19,10 @@ import Tools.MxErrorListener;
 import Tools.globalscope;
 import Tools.IRsema.declaration;
 import Tools.IRsema.func;
+import Tools.RISCVsema.section.asmsection;
+import codegen.ASMPrinter;
+import codegen.ASMTranslator;
+import codegen.PhiCleaner;
 
 public class Compiler {
   public static void main(String[] args) throws Exception {
@@ -48,8 +52,15 @@ public class Compiler {
       ArrayList<func> functons = new ArrayList<func>();
       IRbulider irbulider = new IRbulider(gscope, functons, decl);
       irbulider.visit(ASTRoot);
-      IRPrinter irPrinter = new IRPrinter(decl, output, functons);
-      irPrinter.print();
+      // IRPrinter irPrinter = new IRPrinter(decl, output, functons);
+      // irPrinter.print();
+      PhiCleaner phiCleaner = new PhiCleaner(functons);
+      phiCleaner.cleanPhi();
+      ArrayList<asmsection> sections = new ArrayList<asmsection>();
+      ASMTranslator asmTranslator = new ASMTranslator(decl, functons, sections);
+      asmTranslator.trans();
+      ASMPrinter asmPrinter = new ASMPrinter(sections);
+      asmPrinter.print(output);
     } catch (Tools.error.Error e) {
       System.err.println(e.getMessage() + " at " + e.getErrorLine().line + ":" + e.getErrorLine().charpos);
       // System.out.println(e.getMessage());

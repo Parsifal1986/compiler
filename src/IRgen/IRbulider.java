@@ -56,7 +56,7 @@ import Tools.IRsema.constant1;
 import Tools.IRsema.declaration;
 import Tools.IRsema.func;
 import Tools.IRsema.getelementptr;
-import Tools.IRsema.global;
+import Tools.IRsema.globalvar;
 import Tools.IRsema.load;
 import Tools.IRsema.nullptr;
 import Tools.IRsema.phi;
@@ -104,7 +104,7 @@ public class IRbulider implements ASTVisitor {
     currentBlock = globalinit.headblock;
     for (VarDefStmtNode globalvardefs : globalvardefs) {
       for (InitNode init : globalvardefs.init) {
-        decl.global.add(new global(init.val, globalvardefs.type.ToIrType()));
+        decl.global.add(new globalvar(init.val, globalvardefs.type.ToIrType()));
         if (init.expr != null) {
           init.accept(this);
           currentBlock.statements.add(new assign(init.val, init.expr.val));
@@ -308,7 +308,7 @@ public class IRbulider implements ASTVisitor {
     } else {
       thisptr = it.constructfuncdef.Thisorigin;
     }
-    currentFunc.args.add(thisptr.type + " " + thisptr.tostring());
+    currentFunc.args.add(thisptr);
     for (VarDefStmtNode vardefs : it.vardefs) {
       for (InitNode init : vardefs.init) {
         if (init.expr != null) {
@@ -350,7 +350,7 @@ public class IRbulider implements ASTVisitor {
     for (Reflection parameter_regs : it.parameter_regs) {
       currentFunc.entry.add(new func.EntryPair(parameter_regs.ptr, parameter_regs.param.type));
       currentBlock.add(new assign(parameter_regs.ptr, parameter_regs.param));
-      currentFunc.args.add(parameter_regs.param.type + " " + parameter_regs.param.tostring());
+      currentFunc.args.add(parameter_regs.param);
     }
     it.body.accept(this);
   }
@@ -422,8 +422,8 @@ public class IRbulider implements ASTVisitor {
       register reg = new register(new Type("string", 0), ".str", true);
       String content = it.ctx.StringConst().toString();
       content = content.substring(1, content.length() - 1);
-      content = content.replace("\\n", "\n").replace("\\t", "\t").replace("\\\"", "\\22");
-      int length = content.replace("\\22", "\"").replace("\\\\", "\\").length();
+      content = content/*.replace("\\n", "\\0a")*/.replace("\\t", "\t")/* .replace("\\\"", "\\22") */;
+      int length = content.replace("\\\\", "\\").replace("\\0a", "\n").length();
       decl.global.add(new stringconst(reg, length + 1, "i8", content));
       it.val = reg;
     } else if (it.ctx.arrayConst() != null) {
