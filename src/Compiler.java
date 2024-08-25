@@ -1,4 +1,6 @@
+import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -31,6 +33,7 @@ public class Compiler {
       // InputStream input = new FileInputStream(filename);
       // String IRoutput = "test.ll";
       // PrintStream output = new PrintStream(IRoutput);
+      String filepath = "src/Tools/buildin/builtin.s";
       InputStream input = System.in;
       PrintStream output = System.out;
       MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
@@ -61,6 +64,11 @@ public class Compiler {
       asmTranslator.trans();
       ASMPrinter asmPrinter = new ASMPrinter(sections);
       asmPrinter.print(output);
+      BufferedReader br = new BufferedReader(new FileReader(filepath));
+      String line;
+      while ((line = br.readLine()) != null) {
+        output.println(line);
+      }
     } catch (Tools.error.Error e) {
       System.err.println(e.getMessage() + " at " + e.getErrorLine().line + ":" + e.getErrorLine().charpos);
       // System.out.println(e.getMessage());
