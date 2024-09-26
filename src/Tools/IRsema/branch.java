@@ -3,6 +3,7 @@ package Tools.IRsema;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import Tools.Entity;
 import Tools.RISCVsema.command;
@@ -54,5 +55,14 @@ public class branch extends control {
       ret.add(new control_i(x0, trueBlock.name));
     }
     return ret;
+  }
+
+  @Override
+  public void rename(HashMap<register, Entity> renameMap) {
+    if (condition instanceof register) {
+      if (renameMap.containsKey((register)condition)) {
+        condition = renameMap.get(condition);
+      }
+    }
   }
 }

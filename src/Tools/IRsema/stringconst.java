@@ -2,7 +2,9 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import Tools.Entity;
 import Tools.RISCVsema.command;
 import codegen.RegAlloca;
 
@@ -27,5 +29,10 @@ public class stringconst extends statement {
   @Override
   public ArrayList<command> toAsm(RegAlloca regAlloc) {
     return null;
+  }
+
+  @Override
+  public void rename(HashMap<register, Entity> renameMap) {
+    return;
   }
 }

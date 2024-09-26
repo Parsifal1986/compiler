@@ -2,6 +2,7 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_r;
@@ -66,5 +67,17 @@ public class getelementptr extends statement {
     }
     ret.addAll(regAlloc.StorePhyReg(t0, regAlloc.GetVirtReg(reg)));
     return ret;
+  }
+
+  @Override
+  public void rename(HashMap<register, Entity> renameMap) {
+    if (ptr instanceof register && renameMap.containsKey(ptr)) {
+      ptr = (register)renameMap.get(ptr);
+    }
+    for (int i = 0; i < index.size(); i++) {
+      if (index.get(i) instanceof register && renameMap.containsKey(index.get(i))) {
+        index.set(i, renameMap.get(index.get(i)));
+      }
+    }
   }
 }

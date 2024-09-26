@@ -26,7 +26,9 @@ import Tools.IRsema.func;
 import Tools.RISCVsema.section.asmsection;
 import codegen.ASMPrinter;
 import codegen.ASMTranslator;
+import codegen.Mem2Reger;
 import codegen.PhiCleaner;
+import codegen.Renamer;
 
 public class Compiler {
   public static void main(String[] args) throws Exception {
@@ -36,7 +38,8 @@ public class Compiler {
       // String IRoutput = "test.ll";
       // PrintStream output = new PrintStream(IRoutput);
       String currentFile = System.getProperty("user.dir");
-      Path filePath = Paths.get(currentFile, "../src/Tools/buildin/builtin.s");
+      Path filePath = Paths.get(currentFile, "/src/Tools/buildin/builtin.s");
+      // Path filePath = Paths.get(currentFile, "../src/Tools/buildin/builtin.s");
       InputStream input = System.in;
       PrintStream output = System.out;
       MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
@@ -55,15 +58,19 @@ public class Compiler {
       SematicChecker sematicChecker = new SematicChecker(gscope);
       sematicChecker.visit(ASTRoot);
       declaration decl = new declaration(gscope);
-      ArrayList<func> functons = new ArrayList<func>();
-      IRbulider irbulider = new IRbulider(gscope, functons, decl);
+      ArrayList<func> functions = new ArrayList<func>();
+      IRbulider irbulider = new IRbulider(gscope, functions, decl);
       irbulider.visit(ASTRoot);
-      // IRPrinter irPrinter = new IRPrinter(decl, output, functons);
+      Mem2Reger mem2Reger = new Mem2Reger(functions);
+      mem2Reger.mem2reg();
+      Renamer renamer = new Renamer(functions);
+      renamer.rename();
+      // IRPrinter irPrinter = new IRPrinter(decl, output, functions);
       // irPrinter.print();
-      PhiCleaner phiCleaner = new PhiCleaner(functons);
+      PhiCleaner phiCleaner = new PhiCleaner(functions);
       phiCleaner.cleanPhi();
       ArrayList<asmsection> sections = new ArrayList<asmsection>();
-      ASMTranslator asmTranslator = new ASMTranslator(decl, functons, sections);
+      ASMTranslator asmTranslator = new ASMTranslator(decl, functions, sections);
       asmTranslator.trans();
       ASMPrinter asmPrinter = new ASMPrinter(sections);
       asmPrinter.print(output);
@@ -72,6 +79,7 @@ public class Compiler {
       while ((line = br.readLine()) != null) {
         output.println(line);
       }
+      br.close();
     } catch (Tools.error.Error e) {
       // System.err.println(e.getMessage() + " at " + e.getErrorLine().line + ":" + e.getErrorLine().charpos);
       System.out.println(e.getMessage());

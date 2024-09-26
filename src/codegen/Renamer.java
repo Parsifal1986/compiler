@@ -4,16 +4,16 @@ import java.util.ArrayList;
 
 import Tools.IRsema.func;
 
-public class PhiCleaner {
+public class Renamer {
   private ArrayList<func> functions;
 
-  public PhiCleaner(ArrayList<func> functions) {
+  public Renamer(ArrayList<func> functions) {
     this.functions = functions;
   }
   
-  public void cleanPhi() {
+  public void rename() {
     for (func functions : functions) {
-      functions.cleanPhi();
+      functions.rename();
     }
   }
 }

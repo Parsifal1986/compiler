@@ -2,6 +2,7 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import Tools.Entity;
 import Tools.RISCVsema.command;
@@ -9,26 +10,39 @@ import codegen.RegAlloca;
 
 public class phi extends statement {
   public register dst;
-  public Entity src1;
-  public Entity src2;
-  public String label1;
-  public String label2;
+  public ArrayList<Entity> srcs;
+  public ArrayList<String> labels;
 
-  public phi(register dst, Entity src1, Entity src2, String label1, String label2) {
+  public phi(register dst, ArrayList<Entity> srcs, ArrayList<String> labels) {
     this.dst = dst;
-    this.src1 = src1;
-    this.src2 = src2;
-    this.label1 = label1;
-    this.label2 = label2;
+    this.srcs = srcs;
+    this.labels = labels;
   }
 
   @Override
   public void print(PrintStream out) {
-    out.println(dst.tostring() + " = phi " + dst.type + " [" + src1.tostring() + ", %" + label1 + "], [" + src2.tostring() + ", %" + label2 + "]");
+    out.print(dst.tostring() + " = phi " + dst.type + " ");
+    for (int i = 0; i < srcs.size(); i++) {
+      out.print("[ " + srcs.get(i).tostring() + ", %" + labels.get(i) + " ]");
+      if (i != srcs.size() - 1) {
+        out.print(", ");
+      }
+    }
+    out.println();
   }
 
   @Override
   public ArrayList<command> toAsm(RegAlloca regAlloc) {
     return null;
+  }
+
+  @Override
+  public void rename(HashMap<register, Entity> renameMap) {
+    for (int i = 0; i < srcs.size(); i++) {
+      if (srcs.get(i) instanceof register && renameMap.containsKey(srcs.get(i))) {
+        srcs.set(i, renameMap.get(srcs.get(i)));
+      }
+    }
+    return;
   }
 }

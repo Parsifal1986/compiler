@@ -2,6 +2,7 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import Tools.Entity;
 import Tools.RISCVsema.command;
@@ -36,5 +37,15 @@ public class ret extends control {
     }
     ret.add(new Tools.RISCVsema.Pseudoinstruction.ret());
     return ret;
+  }
+
+  @Override
+  public void rename(HashMap<register, Entity> renameMap) {
+    if (retVal instanceof register) {
+      if (renameMap.containsKey(retVal)) {
+        retVal = renameMap.get(retVal);
+      }
+    }
+    return;
   }
 }

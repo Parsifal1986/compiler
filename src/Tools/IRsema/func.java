@@ -3,10 +3,13 @@ package Tools.IRsema;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import Tools.Entity;
+import Tools.domtree;
 import Tools.RISCVsema.arithmetic_r;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.Pseudoinstruction.li;
@@ -25,6 +28,9 @@ public class func {
   public ArrayList<register> args;
   public ArrayList<EntryPair> entry;
   public block headblock;
+  HashMap<register, AllocaCite> allocaMap;
+  Queue<ReplaceQueueElement> workList;
+  HashMap<register, Entity> renametable;
 
   public static class EntryPair {
     public register reg;
@@ -36,9 +42,34 @@ public class func {
     }
   }
 
+  public static class AllocaCite {
+    public String type;
+    public HashSet<block> defs;
+    public HashSet<block> uses;
+
+    public AllocaCite(String type) {
+      this.type = type;
+      defs = new HashSet<>();
+      uses = new HashSet<>();
+    }
+  }
+
+  public static class ReplaceQueueElement {
+    public block b;
+    public HashMap<register, Entity> replaceval;
+
+    public ReplaceQueueElement(block b, HashMap<register, Entity> replaceval) {
+      this.b = b;
+      this.replaceval = replaceval;
+    }
+  }
+
   public func() {
     entry = new ArrayList<>();
     args = new ArrayList<register>();
+    allocaMap = new HashMap<>();
+    workList = new LinkedList<>();
+    renametable = new HashMap<>();
   }
 
   public void visit(PrintStream out) {
@@ -86,6 +117,143 @@ public class func {
       }
     }
     out.println("}");
+  }
+
+  public void prep() {
+    HashSet<block> visited = new HashSet<>();
+    if (entry.size() > 0) {
+      entry.forEach(
+        e -> allocaMap.put(e.reg, new AllocaCite(e.type))
+      );
+    }
+    Queue<block> q = new LinkedList<>();
+    q.add(headblock);
+    while (q.size() > 0) {
+      block current = q.poll();
+      if (visited.contains(current)) {
+        continue;
+      }
+      visited.add(current);
+      if (current.statements.size() > 0) {
+        for (statement s : current.statements) {
+          if (s instanceof assign) {
+            assign a = (assign)s;
+            if (allocaMap.containsKey(a.left)) {
+              allocaMap.get(a.left).defs.add(current);
+            }
+          } else if (s instanceof load) {
+            load l = (load)s;
+            if (allocaMap.containsKey(l.addr)) {
+              allocaMap.get(l.addr).defs.add(current);
+            }
+          }
+        }
+      }
+      if (current.next != null) {
+        current.next.next().forEach(q::add);
+        current.next.next().forEach(
+          next -> next.pre.add(current)
+        );
+      }
+    }
+  }
+
+  public void mem2reg() {
+    domtree dom = new domtree(headblock);
+    dom.build();
+    dom.getfrontier();
+    for (register b : allocaMap.keySet()) {
+      Queue<block> q = new LinkedList<>();
+      for (block defs : allocaMap.get(b).defs) {
+        q.add(defs);
+      }
+      while (!q.isEmpty()) {
+        block cur = q.poll();
+        for (block frontier : cur.frontier) {
+          if (frontier.phis.containsKey(b)) {
+            continue;
+          }
+          frontier.phis.put(b, new phi(new register(allocaMap.get(b).type), new ArrayList<>(), new ArrayList<>()));
+          q.add(frontier);
+        }
+      }
+    }
+    HashMap<register, Entity> replaceval = new HashMap<>();
+    for (register keySet : allocaMap.keySet()) {
+      replaceval.put(keySet, (allocaMap.get(keySet).type.equals("i1") ? new constant1(false) : (allocaMap.get(keySet).type.equals("i32") ? new constant32(0) : new nullptr())));
+    }
+    workList.add(new ReplaceQueueElement(headblock, replaceval));
+    while (!workList.isEmpty()) {
+      ReplaceQueueElement e = workList.poll();
+      if (e.b.ismem2reg) {
+        continue;
+      }
+      e.b.ismem2reg = true;
+      for (register keySet : e.b.phis.keySet()) {
+        phi p = e.b.phis.get(keySet);
+        e.replaceval.put(keySet, p.dst);
+        e.b.statements.add(0, p);
+      }
+      for (int i = 0; i < e.b.statements.size(); i++) {
+        statement s = e.b.statements.get(i);
+        if (s instanceof assign) {
+          assign a = (assign)s;
+          if (allocaMap.containsKey(a.left)) {
+            if (renametable.containsKey(a.right)) {
+              e.replaceval.put(a.left, renametable.get(a.right));
+            } else {
+              e.replaceval.put(a.left, a.right);
+            }
+            e.b.statements.remove(i);
+            i--;
+          }
+        } else if (s instanceof load) {
+          load l = (load)s;
+          if (allocaMap.containsKey(l.addr)) {
+            // e.b.statements.add(i, new let(l.reg, e.replaceval.get(l.addr)));
+            // e.b.statements.remove(i + 1);
+            renametable.put(l.reg, e.replaceval.get(l.addr));
+            e.b.statements.remove(i);
+            i--;
+          }
+        }
+      }
+      if (e.b.next != null) {
+        for (block nextbBlock : e.b.next.next()) {
+          for (register keySet : nextbBlock.phis.keySet()) {
+            nextbBlock.phis.get(keySet).srcs.add(e.replaceval.get(keySet));
+            nextbBlock.phis.get(keySet).labels.add(e.b.name);
+          }
+          workList.add(new ReplaceQueueElement(nextbBlock, new HashMap<register, Entity>(e.replaceval)));
+        }
+      }
+    }
+  }
+
+  public void rename() {
+    Queue<block> q = new LinkedList<>();
+    q.add(headblock);
+    while (!q.isEmpty()) {
+      block current = q.poll();
+      if (current.isrename) {
+        continue;
+      }
+      current.isrename = true;
+      for (int i = 0; i < current.statements.size(); i++) {
+        statement s = current.statements.get(i);
+        s.rename(renametable);
+        // if (s instanceof let) {
+        //   let l = (let)s;
+        //   renametable.put(l.lhs, l.rhs);
+        //   current.statements.remove(i);
+        //   i--;
+        // }
+      }
+      if (current.next != null) {
+        current.next.rename(renametable);;
+        current.next.next().forEach(q::add);
+      }
+    }
   }
 
   public asmsection trans() {
@@ -179,10 +347,10 @@ public class func {
       }
     }
     for (phi p : phiList) {
-      block b1 = labelMap.get(p.label1);
-      block b2 = labelMap.get(p.label2);
-      b1.add(new let(p.dst, p.src1));
-      b2.add(new let(p.dst, p.src2));
+      for (int i = 0; i < p.srcs.size(); i++) {
+        block b = labelMap.get(p.labels.get(i));
+        b.add(new let(p.dst, p.srcs.get(i)));
+      }
     }
   }
 }

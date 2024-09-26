@@ -2,6 +2,7 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import Tools.Entity;
 import Tools.RISCVsema.command;
@@ -34,4 +35,13 @@ public class assign extends statement {
     ret.add(new memory_s(addr, data, new immnum(0), memory_s.Opcode.SW));
     return ret;
   }
+
+  @Override
+  public void rename(HashMap<register, Entity> renameMap) {
+    if (right instanceof register && renameMap.containsKey(right)) {
+      right = renameMap.get(right);
+    }
+    return;
+  }
+
 }

@@ -2,6 +2,7 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_i;
@@ -90,6 +91,17 @@ public class call extends statement {
     }
     ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg("ra"), regAlloc.GetVirtReg(ra)));
     return ret;
+  }
+
+  @Override
+  public void rename(HashMap<register, Entity> renameMap) {
+    for (int i = 0; i < args.size(); i++) {
+      if (args.get(i) instanceof register) {
+        if (renameMap.containsKey((register)args.get(i))) {
+          args.set(i, renameMap.get(args.get(i)));
+        }
+      }
+    }
   }
   
 }

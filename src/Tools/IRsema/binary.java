@@ -2,6 +2,7 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_r;
@@ -73,5 +74,15 @@ public class binary extends statement {
     }
     ret.addAll(regAlloc.StorePhyReg(r0, regAlloc.GetVirtReg(result)));
     return ret;
+  }
+
+  @Override
+  public void rename(HashMap<register, Entity> renameMap) {
+    if (renameMap.containsKey(lhs)) {
+      lhs = renameMap.get(lhs);
+    }
+    if (renameMap.containsKey(rhs)) {
+      rhs = renameMap.get(rhs);
+    }
   }
 }

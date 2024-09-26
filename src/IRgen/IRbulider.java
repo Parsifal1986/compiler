@@ -180,7 +180,8 @@ public class IRbulider implements ASTVisitor {
     String name = currentBlock.name;
     currentBlock.next = new branch(null, stepBlock, null);
     currentBlock = stepBlock;
-    currentBlock.add(new phi(index, nextIndex, new constant32(0), name, initname));
+    currentBlock.add(new phi(index, new ArrayList<Entity>(Arrays.asList(nextIndex, new constant32(0))), 
+                                    new ArrayList<String>(Arrays.asList(name, initname))));
     currentBlock.add(new binary(binary.opcode.add, index, new constant32(1), nextIndex));
     currentBlock.next = new branch(null, condBlock, null);
     currentBlock = nextBlock;
@@ -422,6 +423,7 @@ public class IRbulider implements ASTVisitor {
       register reg = new register(new Type("string", 0), ".str", true);
       String content = it.ctx.StringConst().toString();
       content = content.substring(1, content.length() - 1);
+      // content = content.replace("\\n", "\\0a").replace("\\t", "\t").replace("\\\"", "\\22");
       content = content/*.replace("\\n", "\\0a")*/.replace("\\t", "\t")/* .replace("\\\"", "\\22") */;
       int length = content.replace("\\\\", "\\").replace("\\0a", "\n").length();
       decl.global.add(new stringconst(reg, length + 1, "i8", content));
@@ -515,7 +517,7 @@ public class IRbulider implements ASTVisitor {
         register reg = new register("i1");
         currentBlock.add(new cmp(reg, it.expr.val, new constant32(0), cmp.opcode.eq));
         it.val = reg;
-      } else if (it.exprType.getTypename() == "bool") {
+      } else if (it.exprType.getTypename().equals("bool")) {
         register reg = new register("i1");
         currentBlock.add(new cmp(reg, it.expr.val, new constant1(false), cmp.opcode.eq));
         it.val = reg;
@@ -681,7 +683,8 @@ public class IRbulider implements ASTVisitor {
       String falseBlockName = currentBlock.name;
       currentBlock = nextBlock;
       register reg = new register("i1");
-      currentBlock.add(new phi(reg, new constant1(true), new constant1(false), trueBlockName, falseBlockName));
+      currentBlock.add(new phi(reg, new ArrayList<Entity>(Arrays.asList(new constant1(true), new constant1(false)))
+                                  , new ArrayList<String>(Arrays.asList(trueBlockName, falseBlockName))));
       it.val = reg;
     } else if (it.op == BinaryExprNode.Opcode.OR) {
       it.lhs.accept(this);
@@ -696,7 +699,8 @@ public class IRbulider implements ASTVisitor {
       String falseBlockName = currentBlock.name;
       currentBlock = nextBlock;
       register reg = new register("i1");
-      currentBlock.add(new phi(reg, new constant1(true), new constant1(false), trueBlockName, falseBlockName));
+      currentBlock.add(new phi(reg, new ArrayList<Entity>(Arrays.asList(new constant1(true), new constant1(false)))
+                                  , new ArrayList<String>(Arrays.asList(trueBlockName, falseBlockName))));
       it.val = reg;
     }
   }
@@ -719,7 +723,8 @@ public class IRbulider implements ASTVisitor {
       it.val = null;
     } else {
       register reg = new register(it.trueExpr.exprType);
-      currentBlock.add(new phi(reg, it.trueExpr.val, it.falseExpr.val, trueBlockName, falseBlockName));
+      currentBlock.add(new phi(reg, new ArrayList<Entity>(Arrays.asList(it.trueExpr.val, it.falseExpr.val))
+                                  , new ArrayList<String>(Arrays.asList(trueBlockName, falseBlockName))));
       it.val = reg;
     }
   }

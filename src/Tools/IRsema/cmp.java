@@ -2,6 +2,7 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_i;
@@ -64,6 +65,16 @@ public class cmp extends statement {
     }
     ret.addAll(regAlloc.StorePhyReg(r0, regAlloc.GetVirtReg(dest)));
     return ret;
+  }
+
+  @Override
+  public void rename(HashMap<register, Entity> renameMap) {
+    if (src1 instanceof register && renameMap.containsKey(src1)) {
+      src1 = renameMap.get(src1);
+    }
+    if (src2 instanceof register && renameMap.containsKey(src2)) {
+      src2 = renameMap.get(src2);
+    }
   }
   
 }

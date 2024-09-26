@@ -2,13 +2,14 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import Tools.Entity;
 import Tools.RISCVsema.arithmetic_i;
 import Tools.RISCVsema.arithmetic_r;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.memory_s;
 import Tools.RISCVsema.Pseudoinstruction.li;
-import Tools.RISCVsema.operand.imm;
 import Tools.RISCVsema.operand.immnum;
 import Tools.RISCVsema.operand.phyreg;
 import Tools.RISCVsema.operand.virtreg;
@@ -49,5 +50,10 @@ public class alloca extends statement {
       ret.add(new memory_s(sp, target, new immnum(ptr.getStackPos()), memory_s.Opcode.SW));
     }
     return ret;
+  }
+
+  @Override
+  public void rename(HashMap<register, Entity> renameMap) {
+    return;
   }
 }

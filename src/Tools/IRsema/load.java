@@ -2,7 +2,9 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import Tools.Entity;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.memory_i;
 import Tools.RISCVsema.operand.immnum;
@@ -31,5 +33,13 @@ public class load extends statement {
     ret.add(new memory_i(r0, r1, new immnum(0), memory_i.Opcode.LW));
     ret.addAll(regAlloc.StorePhyReg(r0, regAlloc.GetVirtReg(reg)));
     return ret;
+  }
+
+  @Override
+  public void rename(HashMap<register, Entity> renameMap) {
+    if (renameMap.containsKey(addr)) {
+      addr = (register) renameMap.get(addr);
+    }
+    return;
   }
 }

@@ -2,6 +2,7 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import Tools.Entity;
 import Tools.RISCVsema.command;
@@ -27,5 +28,10 @@ public class let extends statement {
     ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg("t0"), rhs));
     ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg("t0"), regAlloc.GetVirtReg(lhs)));
     return ret;
+  }
+
+  @Override
+  public void rename(HashMap<register, Entity> renameMap) {
+    return;
   }
 }

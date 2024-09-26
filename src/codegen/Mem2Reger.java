@@ -4,16 +4,17 @@ import java.util.ArrayList;
 
 import Tools.IRsema.func;
 
-public class PhiCleaner {
+public class Mem2Reger {
   private ArrayList<func> functions;
 
-  public PhiCleaner(ArrayList<func> functions) {
+  public Mem2Reger(ArrayList<func> functions) {
     this.functions = functions;
   }
   
-  public void cleanPhi() {
+  public void mem2reg() {
     for (func functions : functions) {
-      functions.cleanPhi();
+      functions.prep();
+      functions.mem2reg();
     }
   }
 }
