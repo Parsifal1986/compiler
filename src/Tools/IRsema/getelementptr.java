@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import Tools.Entity;
+import Tools.RISCVsema.arithmetic_i;
 import Tools.RISCVsema.arithmetic_r;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.memory_i;
@@ -16,10 +17,10 @@ import codegen.RegAlloca;
 public class getelementptr extends statement {
   public String type;
   public register reg;
-  public register ptr;
+  public Entity ptr;
   public ArrayList<Entity> index;
 
-  public getelementptr(String type, register reg, register ptr, ArrayList<Entity> index) {
+  public getelementptr(String type, register reg, Entity ptr, ArrayList<Entity> index) {
     this.type = type;
     this.reg = reg;
     this.ptr = ptr;
@@ -44,8 +45,12 @@ public class getelementptr extends statement {
     phyreg t0 = regAlloc.GetPhyReg("t0");
     phyreg t1 = regAlloc.GetPhyReg("t1");
     phyreg t2 = regAlloc.GetPhyReg("t2");
-    virtreg addr = regAlloc.GetVirtReg(ptr);
-    ret.addAll(regAlloc.GetVirtregAddr(t0, addr));
+    if (ptr instanceof register) {
+      virtreg addr = regAlloc.GetVirtReg((register) ptr);
+      ret.addAll(regAlloc.GetVirtregAddr(t0, addr));
+    } else {
+      ret.add(new arithmetic_i(t0, regAlloc.GetPhyReg("zero"), new immnum(((constant32) ptr).value), arithmetic_i.Opcode.addi));
+    }
     if (type.equals("i32") || type.equals("i8") || type.equals("ptr")) {
       for (int i = 0; i < index.size(); i++) {
         ret.add(new memory_i(t0, t0, new immnum(0), memory_i.Opcode.LW));
@@ -71,8 +76,8 @@ public class getelementptr extends statement {
 
   @Override
   public void rename(HashMap<register, Entity> renameMap) {
-    if (ptr instanceof register && renameMap.containsKey(ptr)) {
-      ptr = (register)renameMap.get(ptr);
+    if (renameMap.containsKey(ptr)) {
+      ptr = renameMap.get(ptr);
     }
     for (int i = 0; i < index.size(); i++) {
       if (index.get(i) instanceof register && renameMap.containsKey(index.get(i))) {
