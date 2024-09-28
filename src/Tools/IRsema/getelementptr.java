@@ -49,7 +49,7 @@ public class getelementptr extends statement {
       virtreg addr = regAlloc.GetVirtReg((register) ptr);
       ret.addAll(regAlloc.GetVirtregAddr(t0, addr));
     } else {
-      ret.add(new arithmetic_i(t0, regAlloc.GetPhyReg("zero"), new immnum(((constant32) ptr).value), arithmetic_i.Opcode.addi));
+      ret.add(new arithmetic_i(t0, regAlloc.GetPhyReg("zero"), new immnum(0), arithmetic_i.Opcode.addi));
     }
     if (type.equals("i32") || type.equals("i8") || type.equals("ptr")) {
       for (int i = 0; i < index.size(); i++) {
