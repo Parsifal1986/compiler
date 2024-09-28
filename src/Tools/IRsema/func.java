@@ -173,7 +173,9 @@ public class func {
           if (frontier.phis.containsKey(b)) {
             continue;
           }
-          frontier.phis.put(b, new phi(new register(allocaMap.get(b).type), new ArrayList<>(), new ArrayList<>()));
+          phi tmp = new phi(new register(allocaMap.get(b).type), new ArrayList<>(), new ArrayList<>());
+          frontier.phis.put(b, tmp);
+          frontier.phisInOrder.add(tmp);
           q.add(frontier);
         }
       }
@@ -192,7 +194,9 @@ public class func {
       for (register keySet : e.b.phis.keySet()) {
         phi p = e.b.phis.get(keySet);
         e.replaceval.put(keySet, p.dst);
-        e.b.statements.add(0, p);
+      }
+      for (int i = e.b.phisInOrder.size() - 1; i >= 0; i--) {
+        e.b.statements.add(0, e.b.phisInOrder.get(i));
       }
       for (int i = 0; i < e.b.statements.size(); i++) {
         statement s = e.b.statements.get(i);

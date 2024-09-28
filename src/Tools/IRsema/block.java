@@ -17,6 +17,7 @@ public class block {
   public ArrayList<block> pre = new ArrayList<>();
   public ArrayList<block> e = new ArrayList<>();
   public HashSet<block> frontier = new HashSet<>();
+  public ArrayList<phi> phisInOrder = new ArrayList<>();
   public HashMap<register, phi> phis = new HashMap<>();
 
   public block newblock(String name) {
