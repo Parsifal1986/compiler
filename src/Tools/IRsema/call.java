@@ -12,6 +12,7 @@ import Tools.RISCVsema.Pseudoinstruction.li;
 import Tools.RISCVsema.Pseudoinstruction.mv;
 import Tools.RISCVsema.operand.immnum;
 import Tools.RISCVsema.operand.phyreg;
+import Tools.RISCVsema.operand.virtreg;
 import codegen.RegAlloca;
 
 public class call extends statement {
@@ -49,8 +50,14 @@ public class call extends statement {
     if (funcname.equals("newarray")) {
       ((constant32)args.get(1)).value = 4;
     }
+    phyreg sp = regAlloc.GetPhyReg("sp");
     register ra = new register("i32");
     ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg("ra"), regAlloc.GetVirtReg(ra)));
+    ret.add(new arithmetic_i(sp, sp, new immnum(-32), arithmetic_i.Opcode.addi));
+    for (int i = 3; i < 7; i++) {
+      phyreg tmpPhyreg = regAlloc.GetPhyReg("a" + i);
+      ret.addAll(regAlloc.StorePhyReg(tmpPhyreg, regAlloc.GetVirtReg(sp, (i - 8) * 4, null)));
+    }
     boolean flag = false;
     if (args.size() <= 8) {
       for (int i = 0; i < args.size(); i++) {
@@ -61,31 +68,43 @@ public class call extends statement {
       for (int i = 0; i < 8; i++) {
         ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg("a" + i), args.get(i)));
       }
-      phyreg t3 = regAlloc.GetPhyReg("t3"), sp = regAlloc.GetPhyReg("sp"), s0 = regAlloc.GetPhyReg("s0");
+      phyreg t1 = regAlloc.GetPhyReg("t1"), s0 = regAlloc.GetPhyReg("s0");
       int stacksize = (int)Math.ceil((8 - args.size()) * 4 / 16) * 16;
       if (stacksize > 2047 || stacksize < -2048) {
-        ret.add(new li(t3, new immnum(stacksize)));
-        ret.add(new arithmetic_r(s0, sp, t3, arithmetic_r.Opcode.add));
+        ret.add(new li(t1, new immnum(stacksize)));
+        ret.add(new arithmetic_r(s0, sp, t1, arithmetic_r.Opcode.add));
       } else {
         ret.add(new arithmetic_i(s0, sp, new immnum(stacksize), arithmetic_i.Opcode.addi));
       }
       for (int i = 8; i < args.size(); i++) {
-        ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg("t0"), args.get(i)));
-        ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg("t0"), regAlloc.GetVirtReg(s0, (i - 8) * 4, res)));
+        phyreg argsp;
+        if (args.get(i) instanceof register) {
+          virtreg argsv = regAlloc.GetVirtReg((register) args.get(i));
+          argsp = regAlloc.GetPhyReg(argsv);
+        } else {
+          argsp = regAlloc.GetPhyReg("t1");
+        }
+        ret.addAll(regAlloc.LoadToPhyReg(argsp, args.get(i)));
+        ret.addAll(regAlloc.StorePhyReg(argsp, regAlloc.GetVirtReg(s0, (i - 8) * 4, null)));
       }
       ret.add(new mv(sp, s0));
     }
     ret.add(new Tools.RISCVsema.Pseudoinstruction.call(funcname));
-    phyreg t3 = regAlloc.GetPhyReg("t3"), sp = regAlloc.GetPhyReg("sp");
-    int stacksize = -(int) Math.ceil((8 - args.size()) * 4 / 16) * 16;
+    phyreg t1 = regAlloc.GetPhyReg("t1");
+    int stacksize = -(int)Math.ceil((8 - args.size()) * 4 / 16) * 16;
     if (flag) {
       if (stacksize > 2047 || stacksize < -2048) {
-        ret.add(new li(t3, new immnum(stacksize)));
-        ret.add(new arithmetic_r(sp, sp, t3, arithmetic_r.Opcode.add));
+        ret.add(new li(t1, new immnum(stacksize)));
+        ret.add(new arithmetic_r(sp, sp, t1, arithmetic_r.Opcode.add));
       } else {
         ret.add(new arithmetic_i(sp, sp, new immnum(stacksize), arithmetic_i.Opcode.addi));
       }
     }
+    for (int i = 3; i < 7; i++) {
+      phyreg tmpPhyreg = regAlloc.GetPhyReg("a" + i);
+      ret.addAll(regAlloc.LoadToPhyReg(tmpPhyreg, regAlloc.GetVirtReg(sp, (i - 8) * 4, null)));
+    }
+    ret.add(new arithmetic_i(sp, sp, new immnum(32), arithmetic_i.Opcode.addi));
     if (res != null && retType != "void") {
       ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg("a0"), regAlloc.GetVirtReg(res)));
     }
@@ -104,4 +123,15 @@ public class call extends statement {
     }
   }
   
+  @Override
+  public void initialize() {
+    if (res != null) {
+      defVar.add(res);
+    }
+    for (Entity arg : args) {
+      if (arg instanceof register) {
+        liveVarIn.add((register)arg);
+      }
+    }
+  }
 }

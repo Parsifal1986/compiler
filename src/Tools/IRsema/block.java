@@ -38,4 +38,22 @@ public class block {
   public void add(statement s) {
     statements.add(s);
   }
+
+  public void checkLive(HashSet<register> successorIn) {
+    HashSet<register> liveOut = successorIn;
+    boolean flag = false;
+    for (int i = statements.size() - 1; i >= 0; i--) {
+      flag = statements.get(i).checkLive(liveOut);
+      if (!flag) {
+        break;
+      }
+      liveOut = statements.get(i).liveVarIn;
+    }
+    if (flag) {
+      for (block pre : pre) {
+        pre.checkLive(liveOut);
+      }
+    }
+    return;
+  }
 }

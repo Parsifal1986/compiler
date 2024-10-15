@@ -26,7 +26,12 @@ public class trans extends statement {
   @Override
   public ArrayList<command> toAsm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
-    phyreg r0 = regAlloc.GetPhyReg("t0");
+    phyreg r0;
+    if (src instanceof register) {
+      r0 = regAlloc.GetPhyReg(regAlloc.GetVirtReg((register) src));
+    } else {
+      r0 = regAlloc.GetPhyReg("t0");
+    }
     ret.addAll(regAlloc.LoadToPhyReg(r0, src));
     ret.addAll(regAlloc.StorePhyReg(r0, regAlloc.GetVirtReg(dst)));
     return ret;
@@ -35,5 +40,13 @@ public class trans extends statement {
   @Override
   public void rename(HashMap<register, Entity> renameMap) {
     return;
+  }
+
+  @Override
+  public void initialize() {
+    if (src instanceof register) {
+      liveVarIn.add((register) src);
+    }
+    defVar.add(dst);
   }
 }

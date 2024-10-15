@@ -15,6 +15,7 @@ import Tools.RISCVsema.load_u;
 import Tools.RISCVsema.memory_i;
 import Tools.RISCVsema.memory_s;
 import Tools.RISCVsema.Pseudoinstruction.li;
+import Tools.RISCVsema.Pseudoinstruction.mv;
 import Tools.RISCVsema.operand.immnum;
 import Tools.RISCVsema.operand.immtag;
 import Tools.RISCVsema.operand.phyreg;
@@ -66,6 +67,22 @@ public class RegAlloca {
     return phyregmap.get(rd);
   }
 
+  public phyreg GetPhyReg(virtreg rd) {
+    if (rd.regId == -1) {
+      return phyregmap.get("t0");
+    } else {
+      return phyregmap.get("t" + rd.regId);
+    }
+  }
+
+  public phyreg GetPhyReg(virtreg rd, int pos) {
+    if (rd.regId == -1) {
+      return phyregmap.get("t" + pos);
+    } else {
+      return phyregmap.get("t" + rd.regId);
+    }
+  }
+
   public ArrayList<command> LoadToPhyReg(phyreg rd, Entity rs) {
     ArrayList<command> ret = new ArrayList<>();
     if (rs instanceof register) {
@@ -85,7 +102,7 @@ public class RegAlloca {
     if (rs.isGlobal) {
       ret.add(new load_u(rd, new immtag(rs.globalname, immtag.range.HIGH), load_u.Opcode.lui));
       ret.add(new memory_i(rd, rd, new immtag(rs.globalname, immtag.range.LOW), memory_i.Opcode.LW));
-    } else {
+    } else if (rs.regId == -1) {
       if (rs.stackpos > 2047 || rs.stackpos < -2048) {
         ret.add(new li(GetPhyReg("t3"), new immnum(rs.stackpos)));
         ret.add(new arithmetic_r(GetPhyReg("t3"), GetPhyReg("t3"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
@@ -103,13 +120,17 @@ public class RegAlloca {
       phyreg t3 = GetPhyReg("t3");
       ret.add(new load_u(t3, new immtag(vr.globalname, immtag.range.HIGH), load_u.Opcode.lui));
       ret.add(new memory_s(t3, reg, new immtag(vr.globalname, immtag.range.LOW), memory_s.Opcode.SW));
-    } else {
+    } else if (vr.regId == -1) {
       if (vr.stackpos > 2047 || vr.stackpos < -2048) {
         ret.add(new li(GetPhyReg("t3"), new immnum(vr.stackpos)));
         ret.add(new arithmetic_r(GetPhyReg("t3"), GetPhyReg("t3"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
         ret.add(new memory_s(GetPhyReg("t3"), reg, new immnum(0), memory_s.Opcode.SW));
       } else {
         ret.add(new memory_s(vr.phyreg, reg, new immnum(vr.stackpos), memory_s.Opcode.SW));
+      }
+    } else {
+      if (!reg.equals(vr.regId)) {
+        ret.add(new mv(GetPhyReg("t" + vr.regId), reg));
       }
     }
     return ret;
@@ -140,10 +161,14 @@ public class RegAlloca {
       virtreg tmpreg = new virtreg(reg.name);
       regmap.put(reg, tmpreg);
       return tmpreg;
-    } else {
+    } else if (reg.regId == -1) {
       int tmp = stacksize;
       stacksize += 4;
       virtreg tmpreg = new virtreg(tmp, GetPhyReg("sp"));
+      regmap.put(reg, tmpreg);
+      return tmpreg;
+    } else {
+      virtreg tmpreg = new virtreg(reg.regId);
       regmap.put(reg, tmpreg);
       return tmpreg;
     }
@@ -151,7 +176,9 @@ public class RegAlloca {
 
   public virtreg GetVirtReg(phyreg reletive, int pos, register reg) {
     virtreg tmpreg = new virtreg(pos, reletive);
-    regmap.put(reg, tmpreg);
+    if (reg != null) {
+      regmap.put(reg, tmpreg);
+    }
     return tmpreg;
   }
 

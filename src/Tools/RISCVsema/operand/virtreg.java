@@ -5,6 +5,7 @@ public class virtreg extends reg {
   public String globalname;
   public int stackpos = -1;
   public phyreg phyreg;
+  public int regId = -1;
 
   // public virtreg(int pos) {
   //   stackpos = pos;
@@ -18,6 +19,10 @@ public class virtreg extends reg {
   public virtreg(String name) {
     globalname = name;
     isGlobal = true;
+  }
+
+  public virtreg(int regId) {
+    this.regId = regId;
   }
 
   public int getStackPos() {

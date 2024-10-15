@@ -8,6 +8,7 @@ import Tools.Entity;
 import Tools.RISCVsema.arithmetic_r;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.operand.phyreg;
+import Tools.RISCVsema.operand.virtreg;
 import codegen.RegAlloca;
 
 public class binary extends statement {
@@ -35,7 +36,8 @@ public class binary extends statement {
   @Override
   public ArrayList<command> toAsm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
-    phyreg r0 = regAlloc.GetPhyReg("t0"), r1 = regAlloc.GetPhyReg("t1"), r2 = regAlloc.GetPhyReg("t2");
+    virtreg lhsv = regAlloc.GetVirtReg((register) lhs), rhsv = regAlloc.GetVirtReg((register) rhs), resultv = regAlloc.GetVirtReg(result);
+    phyreg r0 = regAlloc.GetPhyReg(resultv, 0), r1 = regAlloc.GetPhyReg(lhsv, 0), r2 = regAlloc.GetPhyReg(rhsv, 1);
     ret.addAll(regAlloc.LoadToPhyReg(r1, lhs));
     ret.addAll(regAlloc.LoadToPhyReg(r2, rhs));
     switch (op) {
@@ -84,5 +86,16 @@ public class binary extends statement {
     if (renameMap.containsKey(rhs)) {
       rhs = renameMap.get(rhs);
     }
+  }
+
+  @Override
+  public void initialize() {
+    if (lhs instanceof register) {
+      liveVarIn.add((register) lhs);
+    }
+    if (rhs instanceof register) {
+      liveVarIn.add((register) rhs);
+    }
+    defVar.add(result);
   }
 }

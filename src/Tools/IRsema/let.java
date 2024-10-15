@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import Tools.Entity;
 import Tools.RISCVsema.command;
+import Tools.RISCVsema.operand.phyreg;
 import codegen.RegAlloca;
 
 public class let extends statement {
@@ -25,13 +26,27 @@ public class let extends statement {
   @Override
   public ArrayList<command> toAsm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
-    ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg("t0"), rhs));
-    ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg("t0"), regAlloc.GetVirtReg(lhs)));
+    phyreg r0;
+    if (rhs instanceof register) {
+      r0 = regAlloc.GetPhyReg(regAlloc.GetVirtReg((register) rhs));
+    } else {
+      r0 = regAlloc.GetPhyReg("t0");
+    }
+    ret.addAll(regAlloc.LoadToPhyReg(r0, rhs));
+    ret.addAll(regAlloc.StorePhyReg(r0, regAlloc.GetVirtReg(lhs)));
     return ret;
   }
 
   @Override
   public void rename(HashMap<register, Entity> renameMap) {
     return;
+  }
+
+  @Override
+  public void initialize() {
+    if (rhs instanceof register) {
+      liveVarIn.add((register) rhs);
+    }
+    defVar.add(lhs);
   }
 }

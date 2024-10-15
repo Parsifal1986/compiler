@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import Tools.Entity;
-import Tools.RISCVsema.arithmetic_i;
 import Tools.RISCVsema.arithmetic_r;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.memory_i;
+import Tools.RISCVsema.Pseudoinstruction.mv;
 import Tools.RISCVsema.operand.immnum;
 import Tools.RISCVsema.operand.phyreg;
 import Tools.RISCVsema.operand.virtreg;
@@ -46,14 +46,16 @@ public class getelementptr extends statement {
     phyreg t1 = regAlloc.GetPhyReg("t1");
     phyreg t2 = regAlloc.GetPhyReg("t2");
     if (ptr instanceof register) {
-      virtreg addr = regAlloc.GetVirtReg((register) ptr);
-      ret.addAll(regAlloc.GetVirtregAddr(t0, addr));
+      virtreg ptrv = regAlloc.GetVirtReg((register) ptr);
+      ret.add(new mv(t0,regAlloc.GetPhyReg(ptrv)));
     } else {
-      ret.add(new arithmetic_i(t0, regAlloc.GetPhyReg("zero"), new immnum(0), arithmetic_i.Opcode.addi));
+      ret.add(new mv(t0, regAlloc.GetPhyReg("zero")));
     }
     if (type.equals("i32") || type.equals("i8") || type.equals("ptr")) {
       for (int i = 0; i < index.size(); i++) {
-        ret.add(new memory_i(t0, t0, new immnum(0), memory_i.Opcode.LW));
+        if (i != 0) {
+          ret.add(new memory_i(t0, t0, new immnum(0), memory_i.Opcode.LW));
+        }
         Entity idx = index.get(i);
         ret.addAll(regAlloc.LoadToPhyReg(t1, idx));
         ret.addAll(regAlloc.LoadToPhyReg(t2, new constant32(4)));
@@ -62,7 +64,9 @@ public class getelementptr extends statement {
       }
     } else {
       for (int i = 1; i < index.size(); i++) {
-        ret.add(new memory_i(t0, t0, new immnum(0), memory_i.Opcode.LW));
+        if (i != 1) {
+          ret.add(new memory_i(t0, t0, new immnum(0), memory_i.Opcode.LW));
+        }
         Entity idx = index.get(i);
         ret.addAll(regAlloc.LoadToPhyReg(t1, idx));
         ret.addAll(regAlloc.LoadToPhyReg(t2, new constant32(4)));
@@ -84,5 +88,18 @@ public class getelementptr extends statement {
         index.set(i, renameMap.get(index.get(i)));
       }
     }
+  }
+
+  @Override
+  public void initialize() {
+    if (ptr instanceof register) {
+      liveVarIn.add((register) ptr);
+    }
+    for (Entity idx : index) {
+      if (idx instanceof register) {
+        liveVarIn.add((register) idx);
+      }
+    }
+    defVar.add(reg);
   }
 }

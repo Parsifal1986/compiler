@@ -28,7 +28,7 @@ public class load extends statement {
   @Override
   public ArrayList<command> toAsm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
-    phyreg r0 = regAlloc.GetPhyReg("t0"), r1 = regAlloc.GetPhyReg("t1");
+    phyreg r0 = regAlloc.GetPhyReg(regAlloc.GetVirtReg(reg), 0), r1 = regAlloc.GetPhyReg(regAlloc.GetVirtReg(addr), 1);
     ret.addAll(regAlloc.LoadToPhyReg(r1, addr));
     ret.add(new memory_i(r0, r1, new immnum(0), memory_i.Opcode.LW));
     ret.addAll(regAlloc.StorePhyReg(r0, regAlloc.GetVirtReg(reg)));
@@ -41,5 +41,11 @@ public class load extends statement {
       addr = (register) renameMap.get(addr);
     }
     return;
+  }
+
+  @Override
+  public void initialize() {
+    liveVarIn.add(addr);
+    defVar.add(reg);
   }
 }

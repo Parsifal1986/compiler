@@ -2,7 +2,9 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_i;
@@ -55,5 +57,10 @@ public class alloca extends statement {
   @Override
   public void rename(HashMap<register, Entity> renameMap) {
     return;
+  }
+
+  @Override
+  public void initialize() {
+    liveVarIn = new HashSet<>(Arrays.asList(reg));
   }
 }

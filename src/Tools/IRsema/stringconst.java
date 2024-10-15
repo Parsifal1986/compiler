@@ -35,4 +35,9 @@ public class stringconst extends statement {
   public void rename(HashMap<register, Entity> renameMap) {
     return;
   }
+
+  @Override
+  public void initialize() {
+    defVar.add(reg);
+  }
 }

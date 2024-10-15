@@ -1,6 +1,7 @@
 package Tools.IRsema;
 
 import Tools.Entity;
+import Tools.Interval;
 import Tools.Type;
 
 public class register extends Entity {
@@ -9,6 +10,8 @@ public class register extends Entity {
 
   static int varcounter = 0;
   static int avarcounter = 0;
+  public int regId = -1;
+  public Interval interval = null;
 
   public register(String type) {
     super(type);

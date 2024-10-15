@@ -10,6 +10,7 @@ import Tools.RISCVsema.command;
 import Tools.RISCVsema.control_b;
 import Tools.RISCVsema.control_i;
 import Tools.RISCVsema.operand.phyreg;
+import Tools.RISCVsema.operand.virtreg;
 import codegen.RegAlloca;
 
 public class branch extends control {
@@ -44,8 +45,14 @@ public class branch extends control {
   public ArrayList<command> toAsm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
     phyreg x0 = regAlloc.GetPhyReg("zero");
+    phyreg r0;
     if (condition != null) {
-      phyreg r0 = regAlloc.GetPhyReg("t0");
+      if (condition instanceof register) {
+        virtreg conditionv = regAlloc.GetVirtReg((register) condition);
+        r0 = regAlloc.GetPhyReg(conditionv);
+      } else {
+        r0 = regAlloc.GetPhyReg("t0");
+      }
       ret.addAll(regAlloc.LoadToPhyReg(r0, condition));
       String falseBranchName = "branch_false" + branchCount++;
       ret.add(new control_b(r0, x0, falseBranchName, control_b.Opcode.BEQ));
@@ -63,6 +70,13 @@ public class branch extends control {
       if (renameMap.containsKey((register)condition)) {
         condition = renameMap.get(condition);
       }
+    }
+  }
+  
+  @Override
+  public void initialize() {
+    if (condition instanceof register) {
+      liveVarIn.add((register) condition);
     }
   }
 }

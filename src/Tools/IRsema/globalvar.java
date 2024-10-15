@@ -31,4 +31,9 @@ public class globalvar extends statement {
   public void rename(HashMap<register, Entity> renameMap) {
     return;
   }
+
+  @Override
+  public void initialize() {
+    return;
+  }
 }

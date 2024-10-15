@@ -45,4 +45,14 @@ public class phi extends statement {
     }
     return;
   }
+
+  @Override
+  public void initialize() {
+    for (Entity src : srcs) {
+      if (src instanceof register) {
+        liveVarIn.add(((register) src));
+      }
+    }
+    defVar.add(dst);
+  }
 }

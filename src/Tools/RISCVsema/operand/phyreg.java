@@ -12,4 +12,8 @@ public class phyreg extends reg {
   public String toString() {
     return name;
   }
+  
+  public boolean equals(int tmpNum) {
+    return name.equals("t" + tmpNum);
+  }
 }

@@ -2,13 +2,16 @@ package Tools.IRsema;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 import java.util.Queue;
 
 import Tools.Entity;
+import Tools.Interval;
 import Tools.domtree;
 import Tools.RISCVsema.arithmetic_r;
 import Tools.RISCVsema.command;
@@ -30,7 +33,9 @@ public class func {
   public block headblock;
   HashMap<register, AllocaCite> allocaMap;
   Queue<ReplaceQueueElement> workList;
-  HashMap<register, Entity> renametable;
+  HashMap<register, Entity> renameTable;
+  ArrayList<block> linearOrder;
+  ArrayList<block> outBlock;
 
   public static class EntryPair {
     public register reg;
@@ -54,6 +59,21 @@ public class func {
     }
   }
 
+  public static class PhyRegister {
+    public int id;
+    public register reg;
+
+    public PhyRegister(int id) {
+      this.id = id;
+      reg = null;
+    }
+
+    public PhyRegister(int id, register reg) {
+      this.id = id;
+      this.reg = reg;
+    }
+  }
+
   public static class ReplaceQueueElement {
     public block b;
     public HashMap<register, Entity> replaceval;
@@ -69,7 +89,9 @@ public class func {
     args = new ArrayList<register>();
     allocaMap = new HashMap<>();
     workList = new LinkedList<>();
-    renametable = new HashMap<>();
+    renameTable = new HashMap<>();
+    linearOrder = new ArrayList<>();
+    outBlock = new ArrayList<>();
   }
 
   public void visit(PrintStream out) {
@@ -203,8 +225,8 @@ public class func {
         if (s instanceof assign) {
           assign a = (assign)s;
           if (allocaMap.containsKey(a.left)) {
-            if (renametable.containsKey(a.right)) {
-              e.replaceval.put(a.left, renametable.get(a.right));
+            if (renameTable.containsKey(a.right)) {
+              e.replaceval.put(a.left, renameTable.get(a.right));
             } else {
               e.replaceval.put(a.left, a.right);
             }
@@ -216,7 +238,7 @@ public class func {
           if (allocaMap.containsKey(l.addr)) {
             // e.b.statements.add(i, new let(l.reg, e.replaceval.get(l.addr)));
             // e.b.statements.remove(i + 1);
-            renametable.put(l.reg, e.replaceval.get(l.addr));
+            renameTable.put(l.reg, e.replaceval.get(l.addr));
             e.b.statements.remove(i);
             i--;
           }
@@ -245,19 +267,82 @@ public class func {
       current.isrename = true;
       for (int i = 0; i < current.statements.size(); i++) {
         statement s = current.statements.get(i);
-        s.rename(renametable);
-        // if (s instanceof let) {
-        //   let l = (let)s;
-        //   renametable.put(l.lhs, l.rhs);
-        //   current.statements.remove(i);
-        //   i--;
-        // }
+        s.rename(renameTable);
       }
       if (current.next != null) {
-        current.next.rename(renametable);;
+        current.next.rename(renameTable);;
         current.next.next().forEach(q::add);
       }
     }
+  }
+
+  public void analyze() {
+    HashSet<block> visited = new HashSet<>();
+    dfs(visited, headblock);
+    for (block outBlock : outBlock) {
+      outBlock.checkLive(new HashSet<>());
+    }
+    HashMap<register, Interval> intervalMap = new HashMap<>();
+    int cnt = 0;
+    for (int i = linearOrder.size() - 1; i >= 0; i--) {
+      block current = linearOrder.get(i);
+      for (statement s : current.statements) {
+        for (register r : s.liveVarOut) {
+          if (!intervalMap.containsKey(r)) {
+            intervalMap.put(r, new Interval(cnt, cnt));
+          } else {
+            intervalMap.get(r).end = cnt;
+          }
+        }
+      }
+      cnt++;
+    }
+    PriorityQueue <register> pq = new PriorityQueue<>(new Comparator<register>() {
+      @Override
+      public int compare(register a, register b) {
+        return a.interval.end.compareTo(b.interval.end);
+      }
+    });
+    PriorityQueue <PhyRegister> regPool = new PriorityQueue<>(new Comparator<PhyRegister>() {
+      @Override
+      public int compare(PhyRegister a, PhyRegister b) {
+        return a.reg.interval.end - b.reg.interval.end;
+      }
+    });
+    intervalMap.forEach(
+      (k, v) -> k.interval = v
+    );
+    for (int i = 3; i < 7; i++) {
+      regPool.add(new PhyRegister(i));
+    }
+    while (!pq.isEmpty()) {
+      register e = pq.poll();
+      if (regPool.peek().reg.interval.end < e.interval.start) {
+        PhyRegister pr = regPool.poll();
+        regPool.add(new PhyRegister(pr.id, e));
+        e.regId = pr.id;
+      } else if (regPool.peek().reg.interval.end > e.interval.end) {
+        PhyRegister pr = regPool.poll();
+        regPool.add(new PhyRegister(pr.id, e));
+        e.regId = pr.id;
+        pr.reg.regId = -1;
+      }
+    }
+  }
+
+  public void dfs(HashSet<block> visited, block current) {
+    if (visited.contains(current)) {
+      return;
+    }
+    visited.add(current);
+    if (current.next != null) {
+      current.next.next().forEach(
+        next -> dfs(visited, next)
+        );
+    } else {
+      outBlock.add(current);
+    }
+    linearOrder.add(current);
   }
 
   public asmsection trans() {
@@ -278,8 +363,9 @@ public class func {
       }
       for (int i = 8; i < args.size(); i++) {
         virtreg tmp = regAlloca.GetVirtReg(regAlloca.GetPhyReg("s0"), (i - args.size()) * 4, new register("i32"));
-        text.addAll(regAlloca.LoadToPhyReg(regAlloca.GetPhyReg("t0"), tmp));
-        text.addAll(regAlloca.StorePhyReg(regAlloca.GetPhyReg("t0"), regAlloca.GetVirtReg(args.get(i))));
+        virtreg argsv = regAlloca.GetVirtReg(args.get(i));
+        text.addAll(regAlloca.LoadToPhyReg(regAlloca.GetPhyReg(argsv), tmp));
+        text.addAll(regAlloca.StorePhyReg(regAlloca.GetPhyReg(argsv), argsv));
       }
     }
     if (entry.size() > 0) {
