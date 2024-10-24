@@ -47,7 +47,7 @@ public class getelementptr extends statement {
     phyreg t2 = regAlloc.GetPhyReg("t2");
     if (ptr instanceof register) {
       virtreg ptrv = regAlloc.GetVirtReg((register) ptr);
-      ret.add(new mv(t0,regAlloc.GetPhyReg(ptrv)));
+      ret.addAll(regAlloc.LoadToPhyReg(t0, ptrv));
     } else {
       ret.add(new mv(t0, regAlloc.GetPhyReg("zero")));
     }

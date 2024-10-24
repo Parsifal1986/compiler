@@ -24,6 +24,7 @@ import Tools.RISCVsema.operand.virtreg;
 public class RegAlloca {
   HashMap<register, virtreg> regmap;
   HashMap<String, phyreg> phyregmap;
+  public register[] tmpRegList;
   int stacksize = 0;
   
   public RegAlloca() {
@@ -61,6 +62,10 @@ public class RegAlloca {
     phyregmap.put("t4", new phyreg("t4", 29));
     phyregmap.put("t5", new phyreg("t5", 30));
     phyregmap.put("t6", new phyreg("t6", 31));
+    tmpRegList = new register[4];
+    for (int i = 0; i < 4; i++) {
+      tmpRegList[i] = new register("i32");
+    }
   }
 
   public phyreg GetPhyReg(String rd) {
@@ -80,6 +85,14 @@ public class RegAlloca {
       return phyregmap.get("t" + pos);
     } else {
       return phyregmap.get("t" + rd.regId);
+    }
+  }
+
+  public phyreg GetPhyReg(Entity entity, int pos) {
+    if (entity instanceof register) {
+      return GetPhyReg(GetVirtReg((register)entity), pos);
+    } else {
+      return GetPhyReg("t" + pos);
     }
   }
 
@@ -104,12 +117,14 @@ public class RegAlloca {
       ret.add(new memory_i(rd, rd, new immtag(rs.globalname, immtag.range.LOW), memory_i.Opcode.LW));
     } else if (rs.regId == -1) {
       if (rs.stackpos > 2047 || rs.stackpos < -2048) {
-        ret.add(new li(GetPhyReg("t3"), new immnum(rs.stackpos)));
-        ret.add(new arithmetic_r(GetPhyReg("t3"), GetPhyReg("t3"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
-        ret.add(new memory_i(rd, GetPhyReg("t3"), new immnum(0), memory_i.Opcode.LW));
+        ret.add(new li(GetPhyReg("t2"), new immnum(rs.stackpos)));
+        ret.add(new arithmetic_r(GetPhyReg("t2"), GetPhyReg("t2"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
+        ret.add(new memory_i(rd, GetPhyReg("t2"), new immnum(0), memory_i.Opcode.LW));
       } else {
         ret.add(new memory_i(rd, rs.phyreg, new immnum(rs.stackpos), memory_i.Opcode.LW));
       }
+    } else if (!rd.equals(rs.regId)) {
+      ret.add(new mv(rd, GetPhyReg("t" + rs.regId)));
     }
     return ret;
   }
@@ -117,14 +132,14 @@ public class RegAlloca {
   public ArrayList<command> StorePhyReg(phyreg reg, virtreg vr) {
     ArrayList<command> ret = new ArrayList<>();
     if (vr.isGlobal) {
-      phyreg t3 = GetPhyReg("t3");
-      ret.add(new load_u(t3, new immtag(vr.globalname, immtag.range.HIGH), load_u.Opcode.lui));
-      ret.add(new memory_s(t3, reg, new immtag(vr.globalname, immtag.range.LOW), memory_s.Opcode.SW));
+      phyreg t2 = GetPhyReg("t2");
+      ret.add(new load_u(t2, new immtag(vr.globalname, immtag.range.HIGH), load_u.Opcode.lui));
+      ret.add(new memory_s(t2, reg, new immtag(vr.globalname, immtag.range.LOW), memory_s.Opcode.SW));
     } else if (vr.regId == -1) {
       if (vr.stackpos > 2047 || vr.stackpos < -2048) {
-        ret.add(new li(GetPhyReg("t3"), new immnum(vr.stackpos)));
-        ret.add(new arithmetic_r(GetPhyReg("t3"), GetPhyReg("t3"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
-        ret.add(new memory_s(GetPhyReg("t3"), reg, new immnum(0), memory_s.Opcode.SW));
+        ret.add(new li(GetPhyReg("t2"), new immnum(vr.stackpos)));
+        ret.add(new arithmetic_r(GetPhyReg("t2"), GetPhyReg("t2"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
+        ret.add(new memory_s(GetPhyReg("t2"), reg, new immnum(0), memory_s.Opcode.SW));
       } else {
         ret.add(new memory_s(vr.phyreg, reg, new immnum(vr.stackpos), memory_s.Opcode.SW));
       }
@@ -143,8 +158,8 @@ public class RegAlloca {
       ret.add(new arithmetic_i(reg, reg, new immtag(vr.globalname, immtag.range.LOW), arithmetic_i.Opcode.addi));
     } else {
       if (vr.stackpos > 2047 || vr.stackpos < -2048) {
-        ret.add(new li(GetPhyReg("t3"), new immnum(vr.stackpos)));
-        ret.add(new arithmetic_r(reg, GetPhyReg("t3"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
+        ret.add(new li(GetPhyReg("t2"), new immnum(vr.stackpos)));
+        ret.add(new arithmetic_r(reg, GetPhyReg("t2"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
       } else {
         ret.add(new arithmetic_i(reg, vr.phyreg, new immnum(vr.stackpos), arithmetic_i.Opcode.addi));
       }

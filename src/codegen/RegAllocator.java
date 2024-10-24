@@ -4,14 +4,14 @@ import java.util.ArrayList;
 
 import Tools.IRsema.func;
 
-public class LiveAnalyzer {
+public class RegAllocator {
   private ArrayList<func> functons;
   
-  public LiveAnalyzer(ArrayList<func> functons) {
+  public RegAllocator(ArrayList<func> functons) {
     this.functons = functons;
   }
 
-  public void trans() {
+  public void alloc() {
     for (func functons : functons) {
       functons.analyze();
     }

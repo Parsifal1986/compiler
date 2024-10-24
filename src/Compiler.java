@@ -28,6 +28,7 @@ import codegen.ASMPrinter;
 import codegen.ASMTranslator;
 import codegen.Mem2Reger;
 import codegen.PhiCleaner;
+import codegen.RegAllocator;
 import codegen.Renamer;
 
 public class Compiler {
@@ -38,8 +39,8 @@ public class Compiler {
       // String IRoutput = "test.ll";
       // PrintStream output = new PrintStream(IRoutput);
       String currentFile = System.getProperty("user.dir");
-      // Path filePath = Paths.get(currentFile, "/src/Tools/buildin/builtin.s");
-      Path filePath = Paths.get(currentFile, "../src/Tools/buildin/builtin.s");
+      Path filePath = Paths.get(currentFile, "/src/Tools/buildin/builtin.s");
+      // Path filePath = Paths.get(currentFile, "../src/Tools/buildin/builtin.s");
       InputStream input = System.in;
       PrintStream output = System.out;
       MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
@@ -69,6 +70,8 @@ public class Compiler {
       // irPrinter.print();
       PhiCleaner phiCleaner = new PhiCleaner(functions);
       phiCleaner.cleanPhi();
+      RegAllocator regAllocator = new RegAllocator(functions);
+      regAllocator.alloc();
       ArrayList<asmsection> sections = new ArrayList<asmsection>();
       ASMTranslator asmTranslator = new ASMTranslator(decl, functions, sections);
       asmTranslator.trans();

@@ -8,7 +8,6 @@ import Tools.Entity;
 import Tools.RISCVsema.arithmetic_r;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.operand.phyreg;
-import Tools.RISCVsema.operand.virtreg;
 import codegen.RegAlloca;
 
 public class binary extends statement {
@@ -36,8 +35,7 @@ public class binary extends statement {
   @Override
   public ArrayList<command> toAsm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
-    virtreg lhsv = regAlloc.GetVirtReg((register) lhs), rhsv = regAlloc.GetVirtReg((register) rhs), resultv = regAlloc.GetVirtReg(result);
-    phyreg r0 = regAlloc.GetPhyReg(resultv, 0), r1 = regAlloc.GetPhyReg(lhsv, 0), r2 = regAlloc.GetPhyReg(rhsv, 1);
+    phyreg r0 = regAlloc.GetPhyReg(result, 0), r1 = regAlloc.GetPhyReg(lhs, 0), r2 = regAlloc.GetPhyReg(rhs, 1);
     ret.addAll(regAlloc.LoadToPhyReg(r1, lhs));
     ret.addAll(regAlloc.LoadToPhyReg(r2, rhs));
     switch (op) {

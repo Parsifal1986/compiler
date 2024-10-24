@@ -9,7 +9,6 @@ import Tools.RISCVsema.command;
 import Tools.RISCVsema.memory_s;
 import Tools.RISCVsema.operand.immnum;
 import Tools.RISCVsema.operand.phyreg;
-import Tools.RISCVsema.operand.virtreg;
 import codegen.RegAlloca;
 
 public class assign extends statement {
@@ -29,15 +28,8 @@ public class assign extends statement {
   @Override
   public ArrayList<command> toAsm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
-    phyreg data;
-    if (right instanceof register) {
-      virtreg datav = regAlloc.GetVirtReg((register) right);
-      data = regAlloc.GetPhyReg(datav);
-    } else {
-      data = regAlloc.GetPhyReg("t1");
-    }
-    virtreg addrv = regAlloc.GetVirtReg(left);
-    phyreg addr = regAlloc.GetPhyReg(addrv);
+    phyreg data = regAlloc.GetPhyReg(right, 1);
+    phyreg addr = regAlloc.GetPhyReg(left, 0);
     ret.addAll(regAlloc.LoadToPhyReg(addr, left));
     ret.addAll(regAlloc.LoadToPhyReg(data, right));
     ret.add(new memory_s(addr, data, new immnum(0), memory_s.Opcode.SW));
@@ -57,6 +49,6 @@ public class assign extends statement {
     if (right instanceof register) {
       liveVarIn.add((register) right);
     }
-    defVar.add(left);
+    liveVarIn.add(left);
   }
 }

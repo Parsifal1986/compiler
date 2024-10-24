@@ -12,6 +12,7 @@ import codegen.RegAlloca;
 abstract public class statement {
   public HashSet<register> liveVarIn, liveVarOut;
   public HashSet<register> defVar;
+  boolean hasChecked = false;
 
   public statement() {
     liveVarIn = new HashSet<>();
@@ -22,12 +23,13 @@ abstract public class statement {
   public boolean checkLive(HashSet<register> successorIn) {
     int prevSize = liveVarOut.size();
     liveVarOut.addAll(successorIn);
-    if (liveVarOut.size() == prevSize) {
+    if (liveVarOut.size() == prevSize && hasChecked) {
       return false;
     }
     HashSet<register> tmp = new HashSet<>(liveVarOut);
     tmp.removeAll(defVar);
     liveVarIn.addAll(tmp);
+    hasChecked = true;
     return true;
   }
 

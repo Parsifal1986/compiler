@@ -13,12 +13,12 @@ public class rodatasection extends asmsection {
   
   @Override
   public void print(PrintStream out) {
-    System.out.println(".rodata");
+    out.println(".rodata");
     if (isGlobal) {
-      System.out.println(".globl ");
+      out.println(".globl ");
     }
     out.println(".align 2");
-    System.out.println(name + ":");
-    System.out.println("  .asciz " + "\"" + data + "\"");
+    out.println(name + ":");
+    out.println("  .asciz " + "\"" + data + "\"");
   }
 }

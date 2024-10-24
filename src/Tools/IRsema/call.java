@@ -12,7 +12,6 @@ import Tools.RISCVsema.Pseudoinstruction.li;
 import Tools.RISCVsema.Pseudoinstruction.mv;
 import Tools.RISCVsema.operand.immnum;
 import Tools.RISCVsema.operand.phyreg;
-import Tools.RISCVsema.operand.virtreg;
 import codegen.RegAlloca;
 
 public class call extends statement {
@@ -53,10 +52,9 @@ public class call extends statement {
     phyreg sp = regAlloc.GetPhyReg("sp");
     register ra = new register("i32");
     ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg("ra"), regAlloc.GetVirtReg(ra)));
-    ret.add(new arithmetic_i(sp, sp, new immnum(-32), arithmetic_i.Opcode.addi));
     for (int i = 3; i < 7; i++) {
-      phyreg tmpPhyreg = regAlloc.GetPhyReg("a" + i);
-      ret.addAll(regAlloc.StorePhyReg(tmpPhyreg, regAlloc.GetVirtReg(sp, (i - 8) * 4, null)));
+      phyreg tmpPhyreg = regAlloc.GetPhyReg("t" + i);
+      ret.addAll(regAlloc.StorePhyReg(tmpPhyreg, regAlloc.GetVirtReg(regAlloc.tmpRegList[i - 3])));
     }
     boolean flag = false;
     if (args.size() <= 8) {
@@ -77,13 +75,7 @@ public class call extends statement {
         ret.add(new arithmetic_i(s0, sp, new immnum(stacksize), arithmetic_i.Opcode.addi));
       }
       for (int i = 8; i < args.size(); i++) {
-        phyreg argsp;
-        if (args.get(i) instanceof register) {
-          virtreg argsv = regAlloc.GetVirtReg((register) args.get(i));
-          argsp = regAlloc.GetPhyReg(argsv);
-        } else {
-          argsp = regAlloc.GetPhyReg("t1");
-        }
+        phyreg argsp = regAlloc.GetPhyReg(args.get(i), 1);
         ret.addAll(regAlloc.LoadToPhyReg(argsp, args.get(i)));
         ret.addAll(regAlloc.StorePhyReg(argsp, regAlloc.GetVirtReg(s0, (i - 8) * 4, null)));
       }
@@ -101,10 +93,9 @@ public class call extends statement {
       }
     }
     for (int i = 3; i < 7; i++) {
-      phyreg tmpPhyreg = regAlloc.GetPhyReg("a" + i);
-      ret.addAll(regAlloc.LoadToPhyReg(tmpPhyreg, regAlloc.GetVirtReg(sp, (i - 8) * 4, null)));
+      phyreg tmpPhyreg = regAlloc.GetPhyReg("t" + i);
+      ret.addAll(regAlloc.LoadToPhyReg(tmpPhyreg, regAlloc.GetVirtReg(regAlloc.tmpRegList[i - 3])));
     }
-    ret.add(new arithmetic_i(sp, sp, new immnum(32), arithmetic_i.Opcode.addi));
     if (res != null && retType != "void") {
       ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg("a0"), regAlloc.GetVirtReg(res)));
     }

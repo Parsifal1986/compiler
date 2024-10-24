@@ -37,18 +37,7 @@ public class cmp extends statement {
   @Override
   public ArrayList<command> toAsm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
-    phyreg r0, r1, r2;
-    if (src1 instanceof register) {
-      r1 = regAlloc.GetPhyReg(regAlloc.GetVirtReg((register) src1));
-    } else {
-      r1 = regAlloc.GetPhyReg("t0");
-    }
-    if (src2 instanceof register) {
-      r2 = regAlloc.GetPhyReg(regAlloc.GetVirtReg((register) src2));
-    } else {
-      r2 = regAlloc.GetPhyReg("t1");
-    }
-    r0 = regAlloc.GetPhyReg(regAlloc.GetVirtReg(dest), 0);
+    phyreg r0 = regAlloc.GetPhyReg(dest, 0), r1 = regAlloc.GetPhyReg(src1, 1), r2 = regAlloc.GetPhyReg(src2, 2);
     ret.addAll(regAlloc.LoadToPhyReg(r1, src1));
     ret.addAll(regAlloc.LoadToPhyReg(r2, src2));
     switch (op) {

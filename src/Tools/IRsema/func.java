@@ -23,7 +23,6 @@ import Tools.RISCVsema.operand.virtreg;
 import Tools.RISCVsema.section.asmsection;
 import Tools.RISCVsema.section.textsection;
 import codegen.RegAlloca;
-import Tools.RISCVsema.control_i;
 
 public class func {
   public String name;
@@ -35,7 +34,7 @@ public class func {
   Queue<ReplaceQueueElement> workList;
   HashMap<register, Entity> renameTable;
   ArrayList<block> linearOrder;
-  ArrayList<block> outBlock;
+  ArrayList<block> outBlocks;
 
   public static class EntryPair {
     public register reg;
@@ -50,12 +49,16 @@ public class func {
   public static class AllocaCite {
     public String type;
     public HashSet<block> defs;
+    public ArrayList<block> defsInOrder;
     public HashSet<block> uses;
+    public HashSet<block> usesInOrder;
 
     public AllocaCite(String type) {
       this.type = type;
       defs = new HashSet<>();
+      defsInOrder = new ArrayList<>();
       uses = new HashSet<>();
+      usesInOrder = new HashSet<>();
     }
   }
 
@@ -65,7 +68,7 @@ public class func {
 
     public PhyRegister(int id) {
       this.id = id;
-      reg = null;
+      reg = new register("i32");
     }
 
     public PhyRegister(int id, register reg) {
@@ -91,7 +94,7 @@ public class func {
     workList = new LinkedList<>();
     renameTable = new HashMap<>();
     linearOrder = new ArrayList<>();
-    outBlock = new ArrayList<>();
+    outBlocks = new ArrayList<>();
   }
 
   public void visit(PrintStream out) {
@@ -161,12 +164,18 @@ public class func {
           if (s instanceof assign) {
             assign a = (assign)s;
             if (allocaMap.containsKey(a.left)) {
-              allocaMap.get(a.left).defs.add(current);
+              if (!allocaMap.get(a.left).defs.contains(current)) {
+                allocaMap.get(a.left).defs.add(current);
+                allocaMap.get(a.left).defsInOrder.add(current);
+              }
             }
           } else if (s instanceof load) {
             load l = (load)s;
             if (allocaMap.containsKey(l.addr)) {
-              allocaMap.get(l.addr).defs.add(current);
+              if (!allocaMap.get(l.addr).uses.contains(current)) {
+                allocaMap.get(l.addr).uses.add(current);
+                allocaMap.get(l.addr).usesInOrder.add(current);
+              }
             }
           }
         }
@@ -186,7 +195,7 @@ public class func {
     dom.getfrontier();
     for (register b : allocaMap.keySet()) {
       Queue<block> q = new LinkedList<>();
-      for (block defs : allocaMap.get(b).defs) {
+      for (block defs : allocaMap.get(b).defsInOrder) {
         q.add(defs);
       }
       while (!q.isEmpty()) {
@@ -270,7 +279,7 @@ public class func {
         s.rename(renameTable);
       }
       if (current.next != null) {
-        current.next.rename(renameTable);;
+        current.next.rename(renameTable);
         current.next.next().forEach(q::add);
       }
     }
@@ -279,39 +288,71 @@ public class func {
   public void analyze() {
     HashSet<block> visited = new HashSet<>();
     dfs(visited, headblock);
-    for (block outBlock : outBlock) {
+    for (block outBlock : outBlocks) {
       outBlock.checkLive(new HashSet<>());
     }
     HashMap<register, Interval> intervalMap = new HashMap<>();
-    int cnt = 0;
+    int cnt = 1;
     for (int i = linearOrder.size() - 1; i >= 0; i--) {
       block current = linearOrder.get(i);
       for (statement s : current.statements) {
-        for (register r : s.liveVarOut) {
+        for (register r : s.defVar) {
+          if (!intervalMap.containsKey(r)) {
+              intervalMap.put(r, new Interval(cnt, cnt));
+          } else {
+            intervalMap.get(r).end = cnt;
+          }
+        }
+        for (register r : s.liveVarIn) {
           if (!intervalMap.containsKey(r)) {
             intervalMap.put(r, new Interval(cnt, cnt));
           } else {
             intervalMap.get(r).end = cnt;
           }
         }
+        cnt++;
       }
-      cnt++;
+      if (current.next != null) {
+        statement s = current.next;
+        for (register r : s.defVar) {
+          if (!intervalMap.containsKey(r)) {
+            intervalMap.put(r, new Interval(cnt, cnt));
+          }
+        }
+        for (register r : s.liveVarIn) {
+          if (!intervalMap.containsKey(r)) {
+            intervalMap.put(r, new Interval(cnt, cnt));
+          } else {
+            intervalMap.get(r).end = cnt;
+          }
+        }
+        cnt++;
+      }
     }
     PriorityQueue <register> pq = new PriorityQueue<>(new Comparator<register>() {
       @Override
       public int compare(register a, register b) {
-        return a.interval.end.compareTo(b.interval.end);
+        int startComparison = a.interval.start.compareTo(b.interval.start);
+        if (startComparison == 0) {
+          return a.name.compareTo(b.name);
+        }
+        return startComparison;
       }
     });
     PriorityQueue <PhyRegister> regPool = new PriorityQueue<>(new Comparator<PhyRegister>() {
       @Override
       public int compare(PhyRegister a, PhyRegister b) {
-        return a.reg.interval.end - b.reg.interval.end;
+        int endComparison = a.reg.interval.end.compareTo(b.reg.interval.end);
+        if (endComparison == 0) {
+          return a.reg.regId - b.reg.regId;
+        }
+        return endComparison;
       }
     });
-    intervalMap.forEach(
-      (k, v) -> k.interval = v
-    );
+    for (register keySet : intervalMap.keySet()) {
+      keySet.interval = intervalMap.get(keySet);
+      pq.add(keySet);
+    }
     for (int i = 3; i < 7; i++) {
       regPool.add(new PhyRegister(i));
     }
@@ -335,12 +376,21 @@ public class func {
       return;
     }
     visited.add(current);
+    if (current.statements.size() > 0) {
+      for (statement s : current.statements) {
+        s.initialize();
+      }
+    }
     if (current.next != null) {
+      current.next.initialize();
       current.next.next().forEach(
         next -> dfs(visited, next)
-        );
+      );
+      if (current.next.next().size() == 0) {
+        outBlocks.add(current);
+      }
     } else {
-      outBlock.add(current);
+      outBlocks.add(current);
     }
     linearOrder.add(current);
   }
@@ -368,12 +418,12 @@ public class func {
         text.addAll(regAlloca.StorePhyReg(regAlloca.GetPhyReg(argsv), argsv));
       }
     }
-    if (entry.size() > 0) {
-      for (EntryPair entry : entry) {
-        text.addAll((new alloca(entry.reg, entry.type)).toAsm(regAlloca));
-      }
-      text.add(new control_i(regAlloca.GetPhyReg("zero"), headblock.name));
-    }
+    // if (entry.size() > 0) {
+    //   for (EntryPair entry : entry) {
+    //     text.addAll((new alloca(entry.reg, entry.type)).toAsm(regAlloca));
+    //   }
+    //   text.add(new control_i(regAlloca.GetPhyReg("zero"), headblock.name));
+    // }
     Queue<block> q = new LinkedList<block>();
     q.add(headblock);
     while (q.size() > 0) {
@@ -411,7 +461,7 @@ public class func {
   public void cleanPhi() {
     HashMap<String, block> labelMap = new HashMap<>();
     Queue<block> q = new LinkedList<block>();
-    ArrayList<phi> phiList = new ArrayList<>();
+    ArrayList<block> allBlocks = new ArrayList<>();
     labelMap.put(headblock.name, headblock);
     q.add(headblock);
     while (q.size() > 0) {
@@ -421,13 +471,14 @@ public class func {
         continue;
       }
       current.isclean = true;
+      allBlocks.add(current);
       if (current.statements.size() > 0) {
         Iterator<statement> it = current.statements.iterator();
         while(it.hasNext()) {
           statement s = it.next();
           if (s instanceof phi) {
             phi p = (phi)s;
-            phiList.add(p);
+            current.allPhis.put(p.dst, p);
             it.remove();
           }
         }
@@ -436,10 +487,63 @@ public class func {
         current.next.next().forEach(q::add);
       }
     }
-    for (phi p : phiList) {
-      for (int i = 0; i < p.srcs.size(); i++) {
-        block b = labelMap.get(p.labels.get(i));
-        b.add(new let(p.dst, p.srcs.get(i)));
+    HashSet<block> hasTmpSet = new HashSet<>();
+    for (block b : allBlocks) {
+      HashMap<register, register> tmpMap = new HashMap<>();
+      for (phi p : b.allPhis.values()) {
+        for (int i = 0; i < p.srcs.size(); i++) {
+          block src = labelMap.get(p.labels.get(i));
+          if (p.srcs.get(i) instanceof register) {
+            register r = (register)p.srcs.get(i);
+            if (b.allPhis.containsKey(r)) {
+              if (tmpMap.containsKey(r)) {
+                p.srcs.set(i, tmpMap.get(r));
+              } else {
+                register tmp = new register(r.type);
+                src.addInFront(new let(tmp, r));
+                tmpMap.put(r, tmp);
+                p.srcs.set(i, tmp);
+              }
+            }
+          }
+          boolean flag = false;
+          if (src.next instanceof branch) {
+            for (block next : src.next.next()) {
+              if (next.allPhis.size() != 0 && next != b) {
+                block tmp;
+                if (!src.tmpBlocks.containsKey(b)) {
+                  tmp = new block("tmpPhis");
+                  src.tmpBlocks.put(b, tmp);
+                  hasTmpSet.add(src);
+                  tmp.pre.add(src);
+                  tmp.next = new branch(null, b, null);
+                } else {
+                  tmp = src.tmpBlocks.get(b);
+                }
+                tmp.add(new let(p.dst, p.srcs.get(i)));
+                flag = true;
+                break;
+              }
+            }
+          }
+          if (!flag) {
+            src.add(new let(p.dst, p.srcs.get(i)));
+          }
+        }
+      }
+    }
+    
+    for (block srcBlock : hasTmpSet) {
+      branch br = (branch)srcBlock.next;
+      for (block values : srcBlock.tmpBlocks.values()) {
+        block next = values.next.next().get(0);
+        if (br.trueBlock == next) {
+          br.trueBlock = values;
+        } else {
+          br.falseBlock = values;
+        }
+        next.pre.remove(srcBlock);
+        next.pre.add(values);
       }
     }
   }

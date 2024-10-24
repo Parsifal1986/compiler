@@ -11,12 +11,13 @@ public class register extends Entity {
   static int varcounter = 0;
   static int avarcounter = 0;
   public int regId = -1;
-  public Interval interval = null;
+  public Interval interval;
 
   public register(String type) {
     super(type);
     name = "tmp.var" + avarcounter++;
     this.isGlobal = false;
+    this.interval = new Interval(0, 0);
   }
 
   public register(Type type, String name, boolean isGlobal) {
