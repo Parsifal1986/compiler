@@ -35,9 +35,6 @@ public class ret extends control {
     if (retVal != null) {
       ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg("a0"), retVal));
     }
-    for (RegAlloca.virtualPhyReg a : regAlloc.calleeSaveRegList) {
-      ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg(a.regId), regAlloc.GetVirtReg(a.virtualReg)));
-    }
     ret.add(new Tools.RISCVsema.Pseudoinstruction.ret());
     return ret;
   }

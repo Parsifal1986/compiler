@@ -39,6 +39,7 @@ public class RegAlloca {
   public ArrayList<virtualPhyReg> callerSaveRegList;
   public HashMap<Integer, register> callerSaveRegMap;
   public ArrayList<virtualPhyReg> calleeSaveRegList;
+  public HashMap<Integer, register> calleeSaveRegMap;
   public register raSaveRegister;
   int stacksize = 0;
 
@@ -123,12 +124,17 @@ public class RegAlloca {
     calleeSaveRegList = new ArrayList<>();
     callerSaveRegList = new ArrayList<>();
     callerSaveRegMap = new HashMap<>();
+    calleeSaveRegMap = new HashMap<>();
     raSaveRegister = new register("i32");
-    calleeSaveRegList.add(new virtualPhyReg(9, new register("i32")));
-    for (int i = 18; i < 28; i++) {
-      calleeSaveRegList.add(new virtualPhyReg(i, new register("i32")));
-    }
     register tmp = new register("i32");
+    calleeSaveRegList.add(new virtualPhyReg(9, tmp));
+    calleeSaveRegMap.put(9, tmp);
+    for (int i = 18; i < 28; i++) {
+      tmp = new register("i32");
+      calleeSaveRegList.add(new virtualPhyReg(i, tmp));
+      calleeSaveRegMap.put(i, tmp);
+    }
+    tmp = new register("i32");
     callerSaveRegList.add(new virtualPhyReg(7, tmp));
     callerSaveRegMap.put(7, tmp);
     for (int i = 11; i < 18; i++) {

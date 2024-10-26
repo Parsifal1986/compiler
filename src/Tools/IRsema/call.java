@@ -3,7 +3,6 @@ package Tools.IRsema;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_i;

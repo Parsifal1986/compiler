@@ -35,6 +35,7 @@ public class func {
   HashMap<register, Entity> renameTable;
   ArrayList<block> linearOrder;
   ArrayList<block> outBlocks;
+  HashSet<Integer> calleeUsedReg;
 
   public static class EntryPair {
     public register reg;
@@ -95,6 +96,7 @@ public class func {
     renameTable = new HashMap<>();
     linearOrder = new ArrayList<>();
     outBlocks = new ArrayList<>();
+    calleeUsedReg = new HashSet<>();
   }
 
   public void visit(PrintStream out) {
@@ -373,11 +375,13 @@ public class func {
         PhyRegister pr = regPool.poll();
         regPool.add(new PhyRegister(pr.id, e));
         e.regId = pr.id;
+        calleeUsedReg.add(pr.id);
       } else if (regPool.peek().reg.interval.end > e.interval.end) {
         PhyRegister pr = regPool.poll();
         regPool.add(new PhyRegister(pr.id, e));
         e.regId = pr.id;
         pr.reg.regId = -1;
+        calleeUsedReg.add(pr.id);
       }
     }
   }
@@ -412,8 +416,12 @@ public class func {
     text.add(new mv(regAlloca.GetPhyReg("s0"), regAlloca.GetPhyReg("sp")));
     text.add(new li(regAlloca.GetPhyReg("t0"), null));
     text.add(new arithmetic_r(regAlloca.GetPhyReg("sp"), regAlloca.GetPhyReg("sp"), regAlloca.GetPhyReg("t0"), arithmetic_r.Opcode.add));
-    for (RegAlloca.virtualPhyReg a : regAlloca.calleeSaveRegList) {
-      text.addAll(regAlloca.StorePhyReg(regAlloca.GetPhyReg(a.regId), regAlloca.GetVirtReg(a.virtualReg)));
+    HashMap<Integer, register> calleeSavedMap = new HashMap<>();
+    for (Integer keySet : calleeUsedReg) {
+      if (regAlloca.calleeSaveRegMap.containsKey(keySet)) {
+        text.addAll(regAlloca.StorePhyReg(regAlloca.GetPhyReg(keySet), regAlloca.GetVirtReg(regAlloca.calleeSaveRegMap.get(keySet))));
+        calleeSavedMap.put(keySet, regAlloca.calleeSaveRegMap.get(keySet));
+      }
     }
     if (args.size() <= 8) {
       for (int i = 0; i < args.size(); i++) {
@@ -454,13 +462,18 @@ public class func {
       }
       if (current.next != null) {
         tmp.addAll(current.next.toAsm(regAlloca));
+        if (current.next.next().size() == 0) {
+          for (Integer keySet : calleeSavedMap.keySet()) {
+            tmp.addAll(tmp.size() - 1, regAlloca.LoadToPhyReg(regAlloca.GetPhyReg(keySet), regAlloca.GetVirtReg(calleeSavedMap.get(keySet))));
+          }
+        }
         current.next.next().forEach(q::add);
       } else {
         if (name.equals("main")) {
           tmp.add(new li(regAlloca.GetPhyReg("a0"), new immnum(0)));
         }
-        for (RegAlloca.virtualPhyReg a : regAlloca.calleeSaveRegList) {
-          tmp.addAll(regAlloca.LoadToPhyReg(regAlloca.GetPhyReg(a.regId), regAlloca.GetVirtReg(a.virtualReg)));
+        for (Integer keySet : calleeSavedMap.keySet()) {
+          tmp.addAll(regAlloca.LoadToPhyReg(regAlloca.GetPhyReg(keySet), regAlloca.GetVirtReg(calleeSavedMap.get(keySet))));
         }
         tmp.add(new ret());
       }
