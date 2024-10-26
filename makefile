@@ -4,4 +4,4 @@ build:
 
 .PHONY: run
 run:
-	cd build && java -cp /ulib/antlr-4.9.3-complete.jar:. Compiler -Xss1024m
+	cd build && java -cp /ulib/antlr-4.9.3-complete.jar:. Compiler -Xss2048m

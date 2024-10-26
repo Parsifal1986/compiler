@@ -3,6 +3,7 @@ package Tools.IRsema;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_i;
@@ -51,10 +52,17 @@ public class call extends statement {
       ((constant32)args.get(1)).value = 4;
     }
     phyreg sp = regAlloc.GetPhyReg("sp");
-    register ra = new register("i32");
+    register ra = regAlloc.raSaveRegister;
     ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg("ra"), regAlloc.GetVirtReg(ra)));
-    for (RegAlloca.virtualPhyReg a : regAlloc.callerSaveRegList) {
-      ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg(a.regId), regAlloc.GetVirtReg(a.virtualReg)));
+    HashMap<Integer, register> callerSavedMap = new HashMap<>();
+    for (register a : liveVarIn) {
+      if (callerSavedMap.containsKey(a.regId)) {
+        continue;
+      }
+      if (regAlloc.callerSaveRegMap.containsKey(a.regId)) {
+        ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg(a.regId), regAlloc.GetVirtReg(regAlloc.callerSaveRegMap.get(a.regId))));
+        callerSavedMap.put(a.regId, regAlloc.callerSaveRegMap.get(a.regId));
+      }
     }
     boolean flag = false;
     if (args.size() <= 8) {
@@ -106,9 +114,8 @@ public class call extends statement {
         ret.add(new arithmetic_i(sp, sp, new immnum(stacksize), arithmetic_i.Opcode.addi));
       }
     }
-    for (int i = 0; i < regAlloc.callerSaveRegList.size(); i++) {
-      RegAlloca.virtualPhyReg a = regAlloc.callerSaveRegList.get(i);
-      ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg(a.regId), regAlloc.GetVirtReg(a.virtualReg)));
+    for (Integer keySet : callerSavedMap.keySet()) {
+      ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg(keySet), regAlloc.GetVirtReg(callerSavedMap.get(keySet))));
     }
     if (res != null && retType != "void") {
       ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg("a0"), regAlloc.GetVirtReg(res)));
