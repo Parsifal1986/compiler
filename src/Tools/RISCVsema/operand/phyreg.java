@@ -2,7 +2,7 @@ package Tools.RISCVsema.operand;
 
 public class phyreg extends reg {
   String name;
-  int num;
+  public int num;
   public phyreg(String name, int num) {
     this.name = name;
     this.num = num;
@@ -13,7 +13,7 @@ public class phyreg extends reg {
     return name;
   }
   
-  public boolean equals(int tmpNum) {
-    return name.equals("t" + tmpNum);
+  public boolean equals(phyreg reg) {
+    return num == reg.num;
   }
 }

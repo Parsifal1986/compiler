@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import Tools.Entity;
+import Tools.RISCVsema.arithmetic_i;
 import Tools.RISCVsema.arithmetic_r;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.memory_i;
 import Tools.RISCVsema.Pseudoinstruction.mv;
 import Tools.RISCVsema.operand.immnum;
 import Tools.RISCVsema.operand.phyreg;
-import Tools.RISCVsema.operand.virtreg;
 import codegen.RegAlloca;
 
 public class getelementptr extends statement {
@@ -44,10 +44,8 @@ public class getelementptr extends statement {
     ArrayList<command> ret = new ArrayList<>();
     phyreg t0 = regAlloc.GetPhyReg("t0");
     phyreg t1 = regAlloc.GetPhyReg("t1");
-    phyreg t2 = regAlloc.GetPhyReg("t2");
     if (ptr instanceof register) {
-      virtreg ptrv = regAlloc.GetVirtReg((register) ptr);
-      ret.addAll(regAlloc.LoadToPhyReg(t0, ptrv));
+      ret.addAll(regAlloc.LoadToPhyReg(t0, regAlloc.GetVirtReg((register) ptr)));
     } else {
       ret.add(new mv(t0, regAlloc.GetPhyReg("zero")));
     }
@@ -58,8 +56,7 @@ public class getelementptr extends statement {
         }
         Entity idx = index.get(i);
         ret.addAll(regAlloc.LoadToPhyReg(t1, idx));
-        ret.addAll(regAlloc.LoadToPhyReg(t2, new constant32(4)));
-        ret.add(new arithmetic_r(t1, t1, t2, arithmetic_r.Opcode.mul));
+        ret.add(new arithmetic_i(t1, t1, new immnum(2), arithmetic_i.Opcode.slli));
         ret.add(new arithmetic_r(t0, t0, t1, arithmetic_r.Opcode.add));
       }
     } else {
@@ -69,8 +66,7 @@ public class getelementptr extends statement {
         }
         Entity idx = index.get(i);
         ret.addAll(regAlloc.LoadToPhyReg(t1, idx));
-        ret.addAll(regAlloc.LoadToPhyReg(t2, new constant32(4)));
-        ret.add(new arithmetic_r(t1, t1, t2, arithmetic_r.Opcode.mul));
+        ret.add(new arithmetic_i(t1, t1, new immnum(2), arithmetic_i.Opcode.slli));
         ret.add(new arithmetic_r(t0, t0, t1, arithmetic_r.Opcode.add));
       }
     }

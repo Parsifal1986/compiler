@@ -37,7 +37,7 @@ public class cmp extends statement {
   @Override
   public ArrayList<command> toAsm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
-    phyreg r0 = regAlloc.GetPhyReg(dest, 0), r1 = regAlloc.GetPhyReg(src1, 1), r2 = regAlloc.GetPhyReg(src2, 2);
+    phyreg r0 = regAlloc.GetPhyReg("t0"), r1 = regAlloc.GetPhyReg(src1, 0), r2 = regAlloc.GetPhyReg(src2, 1);
     ret.addAll(regAlloc.LoadToPhyReg(r1, src1));
     ret.addAll(regAlloc.LoadToPhyReg(r2, src2));
     switch (op) {

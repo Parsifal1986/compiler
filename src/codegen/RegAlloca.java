@@ -22,10 +22,33 @@ import Tools.RISCVsema.operand.phyreg;
 import Tools.RISCVsema.operand.virtreg;
 
 public class RegAlloca {
+  public class virtualPhyReg {
+    public int regId;
+    public register virtualReg;
+    
+    public virtualPhyReg(int regId, register virtualReg) {
+      this.regId = regId;
+      this.virtualReg = virtualReg;
+    }
+  }
+
   HashMap<register, virtreg> regmap;
   HashMap<String, phyreg> phyregmap;
-  public register[] tmpRegList;
+  HashMap<Integer, phyreg> numtoregmap;
+  public static ArrayList<Integer> allocableRegList;
+  public ArrayList<virtualPhyReg> callerSaveRegList;
+  public ArrayList<virtualPhyReg> calleeSaveRegList;
   int stacksize = 0;
+
+  static {
+    allocableRegList = new ArrayList<>();
+    for (int i = 7; i < 32; i++) {
+      if (i == 10 || i == 8) {
+        continue;
+      }
+      allocableRegList.add(i);
+    }
+  }
   
   public RegAlloca() {
     regmap = new HashMap<>();
@@ -62,9 +85,51 @@ public class RegAlloca {
     phyregmap.put("t4", new phyreg("t4", 29));
     phyregmap.put("t5", new phyreg("t5", 30));
     phyregmap.put("t6", new phyreg("t6", 31));
-    tmpRegList = new register[4];
-    for (int i = 0; i < 4; i++) {
-      tmpRegList[i] = new register("i32");
+    numtoregmap = new HashMap<>();
+    numtoregmap.put(0, phyregmap.get("zero"));
+    numtoregmap.put(1, phyregmap.get("ra"));
+    numtoregmap.put(2, phyregmap.get("sp"));
+    numtoregmap.put(3, phyregmap.get("gp"));
+    numtoregmap.put(4, phyregmap.get("tp"));
+    numtoregmap.put(5, phyregmap.get("t0"));
+    numtoregmap.put(6, phyregmap.get("t1"));
+    numtoregmap.put(7, phyregmap.get("t2"));
+    numtoregmap.put(8, phyregmap.get("s0"));
+    numtoregmap.put(9, phyregmap.get("s1"));
+    numtoregmap.put(10, phyregmap.get("a0"));
+    numtoregmap.put(11, phyregmap.get("a1"));
+    numtoregmap.put(12, phyregmap.get("a2"));
+    numtoregmap.put(13, phyregmap.get("a3"));
+    numtoregmap.put(14, phyregmap.get("a4"));
+    numtoregmap.put(15, phyregmap.get("a5"));
+    numtoregmap.put(16, phyregmap.get("a6"));
+    numtoregmap.put(17, phyregmap.get("a7"));
+    numtoregmap.put(18, phyregmap.get("s2"));
+    numtoregmap.put(19, phyregmap.get("s3"));
+    numtoregmap.put(20, phyregmap.get("s4"));
+    numtoregmap.put(21, phyregmap.get("s5"));
+    numtoregmap.put(22, phyregmap.get("s6"));
+    numtoregmap.put(23, phyregmap.get("s7"));
+    numtoregmap.put(24, phyregmap.get("s8"));
+    numtoregmap.put(25, phyregmap.get("s9"));
+    numtoregmap.put(26, phyregmap.get("s10"));
+    numtoregmap.put(27, phyregmap.get("s11"));
+    numtoregmap.put(28, phyregmap.get("t3"));
+    numtoregmap.put(29, phyregmap.get("t4"));
+    numtoregmap.put(30, phyregmap.get("t5"));
+    numtoregmap.put(31, phyregmap.get("t6"));
+    calleeSaveRegList = new ArrayList<>();
+    callerSaveRegList = new ArrayList<>();
+    calleeSaveRegList.add(new virtualPhyReg(9, new register("i32")));
+    for (int i = 18; i < 28; i++) {
+      calleeSaveRegList.add(new virtualPhyReg(i, new register("i32")));
+    }
+    callerSaveRegList.add(new virtualPhyReg(7, new register("i32")));
+    for (int i = 11; i < 18; i++) {
+      callerSaveRegList.add(new virtualPhyReg(i, new register("i32")));
+    }
+    for (int i = 28; i < 32; i++) {
+      callerSaveRegList.add(new virtualPhyReg(i, new register("i32")));
     }
   }
 
@@ -72,11 +137,15 @@ public class RegAlloca {
     return phyregmap.get(rd);
   }
 
+  public phyreg GetPhyReg(int rd) {
+    return numtoregmap.get(rd);
+  }
+
   public phyreg GetPhyReg(virtreg rd) {
     if (rd.regId == -1) {
       return phyregmap.get("t0");
     } else {
-      return phyregmap.get("t" + rd.regId);
+      return numtoregmap.get(rd.regId);
     }
   }
 
@@ -84,7 +153,7 @@ public class RegAlloca {
     if (rd.regId == -1) {
       return phyregmap.get("t" + pos);
     } else {
-      return phyregmap.get("t" + rd.regId);
+      return numtoregmap.get(rd.regId);
     }
   }
 
@@ -117,14 +186,14 @@ public class RegAlloca {
       ret.add(new memory_i(rd, rd, new immtag(rs.globalname, immtag.range.LOW), memory_i.Opcode.LW));
     } else if (rs.regId == -1) {
       if (rs.stackpos > 2047 || rs.stackpos < -2048) {
-        ret.add(new li(GetPhyReg("t2"), new immnum(rs.stackpos)));
-        ret.add(new arithmetic_r(GetPhyReg("t2"), GetPhyReg("t2"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
-        ret.add(new memory_i(rd, GetPhyReg("t2"), new immnum(0), memory_i.Opcode.LW));
+        ret.add(new li(GetPhyReg("t1"), new immnum(rs.stackpos)));
+        ret.add(new arithmetic_r(GetPhyReg("t1"), GetPhyReg("t1"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
+        ret.add(new memory_i(rd, GetPhyReg("t1"), new immnum(0), memory_i.Opcode.LW));
       } else {
         ret.add(new memory_i(rd, rs.phyreg, new immnum(rs.stackpos), memory_i.Opcode.LW));
       }
-    } else if (!rd.equals(rs.regId)) {
-      ret.add(new mv(rd, GetPhyReg("t" + rs.regId)));
+    } else if (!rd.equals(GetPhyReg(rs.regId))) {
+      ret.add(new mv(rd, GetPhyReg(rs.regId)));
     }
     return ret;
   }
@@ -132,20 +201,20 @@ public class RegAlloca {
   public ArrayList<command> StorePhyReg(phyreg reg, virtreg vr) {
     ArrayList<command> ret = new ArrayList<>();
     if (vr.isGlobal) {
-      phyreg t2 = GetPhyReg("t2");
-      ret.add(new load_u(t2, new immtag(vr.globalname, immtag.range.HIGH), load_u.Opcode.lui));
-      ret.add(new memory_s(t2, reg, new immtag(vr.globalname, immtag.range.LOW), memory_s.Opcode.SW));
+      phyreg t1 = GetPhyReg("t1");
+      ret.add(new load_u(t1, new immtag(vr.globalname, immtag.range.HIGH), load_u.Opcode.lui));
+      ret.add(new memory_s(t1, reg, new immtag(vr.globalname, immtag.range.LOW), memory_s.Opcode.SW));
     } else if (vr.regId == -1) {
       if (vr.stackpos > 2047 || vr.stackpos < -2048) {
-        ret.add(new li(GetPhyReg("t2"), new immnum(vr.stackpos)));
-        ret.add(new arithmetic_r(GetPhyReg("t2"), GetPhyReg("t2"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
-        ret.add(new memory_s(GetPhyReg("t2"), reg, new immnum(0), memory_s.Opcode.SW));
+        ret.add(new li(GetPhyReg("t1"), new immnum(vr.stackpos)));
+        ret.add(new arithmetic_r(GetPhyReg("t1"), GetPhyReg("t1"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
+        ret.add(new memory_s(GetPhyReg("t1"), reg, new immnum(0), memory_s.Opcode.SW));
       } else {
         ret.add(new memory_s(vr.phyreg, reg, new immnum(vr.stackpos), memory_s.Opcode.SW));
       }
     } else {
-      if (!reg.equals(vr.regId)) {
-        ret.add(new mv(GetPhyReg("t" + vr.regId), reg));
+      if (!reg.equals(GetPhyReg(vr.regId))) {
+        ret.add(new mv(GetPhyReg(vr.regId), reg));
       }
     }
     return ret;
@@ -158,8 +227,8 @@ public class RegAlloca {
       ret.add(new arithmetic_i(reg, reg, new immtag(vr.globalname, immtag.range.LOW), arithmetic_i.Opcode.addi));
     } else {
       if (vr.stackpos > 2047 || vr.stackpos < -2048) {
-        ret.add(new li(GetPhyReg("t2"), new immnum(vr.stackpos)));
-        ret.add(new arithmetic_r(reg, GetPhyReg("t2"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
+        ret.add(new li(GetPhyReg("t1"), new immnum(vr.stackpos)));
+        ret.add(new arithmetic_r(reg, GetPhyReg("t1"), GetPhyReg("sp"), arithmetic_r.Opcode.add));
       } else {
         ret.add(new arithmetic_i(reg, vr.phyreg, new immnum(vr.stackpos), arithmetic_i.Opcode.addi));
       }

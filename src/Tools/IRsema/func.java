@@ -287,12 +287,19 @@ public class func {
 
   public void analyze() {
     HashSet<block> visited = new HashSet<>();
+    HashMap<register, Interval> intervalMap = new HashMap<>();
+    ArrayList<register> argsReg = new ArrayList<>();
+    for (int i = 0; i < Math.min(8, args.size()); i++) {
+      register tmp = new register(args.get(i).type);
+      tmp.interval = new Interval(1, i + 1);
+      argsReg.add(tmp);
+      intervalMap.put(args.get(i), new Interval(i + 1, i + 1));
+    }
     dfs(visited, headblock);
     for (block outBlock : outBlocks) {
       outBlock.checkLive(new HashSet<>());
     }
-    HashMap<register, Interval> intervalMap = new HashMap<>();
-    int cnt = 1;
+    int cnt = Math.min(8, args.size()) + 1;
     for (int i = linearOrder.size() - 1; i >= 0; i--) {
       block current = linearOrder.get(i);
       for (statement s : current.statements) {
@@ -353,8 +360,12 @@ public class func {
       keySet.interval = intervalMap.get(keySet);
       pq.add(keySet);
     }
-    for (int i = 3; i < 7; i++) {
-      regPool.add(new PhyRegister(i));
+    for (Integer i : RegAlloca.allocableRegList) {
+      PhyRegister tmp = new PhyRegister(i);
+      if (10 <= i && i < 10 + argsReg.size()) {
+        tmp.reg = argsReg.get(i - 10);
+      }
+      regPool.add(tmp);
     }
     while (!pq.isEmpty()) {
       register e = pq.poll();
@@ -401,6 +412,9 @@ public class func {
     text.add(new mv(regAlloca.GetPhyReg("s0"), regAlloca.GetPhyReg("sp")));
     text.add(new li(regAlloca.GetPhyReg("t0"), null));
     text.add(new arithmetic_r(regAlloca.GetPhyReg("sp"), regAlloca.GetPhyReg("sp"), regAlloca.GetPhyReg("t0"), arithmetic_r.Opcode.add));
+    for (RegAlloca.virtualPhyReg a : regAlloca.calleeSaveRegList) {
+      text.addAll(regAlloca.StorePhyReg(regAlloca.GetPhyReg(a.regId), regAlloca.GetVirtReg(a.virtualReg)));
+    }
     if (args.size() <= 8) {
       for (int i = 0; i < args.size(); i++) {
         virtreg tmp = regAlloca.GetVirtReg(args.get(i));
@@ -444,10 +458,11 @@ public class func {
       } else {
         if (name.equals("main")) {
           tmp.add(new li(regAlloca.GetPhyReg("a0"), new immnum(0)));
-          tmp.add(new ret());
-        } else {
-          tmp.add(new ret());
         }
+        for (RegAlloca.virtualPhyReg a : regAlloca.calleeSaveRegList) {
+          tmp.addAll(regAlloca.LoadToPhyReg(regAlloca.GetPhyReg(a.regId), regAlloca.GetVirtReg(a.virtualReg)));
+        }
+        tmp.add(new ret());
       }
       tmp.get(0).label = current.name;
       text.addAll(tmp);
