@@ -49,7 +49,7 @@ public class load extends statement {
       liveVarIn.add(addr);
     }
     if (!reg.isGlobal) {
-      liveVarIn.add(reg);
+      defVar.add(reg);
     }
   }
 }
