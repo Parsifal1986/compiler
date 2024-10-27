@@ -53,7 +53,7 @@ public class assign extends statement {
       }
     }
     if (!left.isGlobal) {
-      liveVarOut.add(left);
+      liveVarIn.add(left);
     }
   }
 }

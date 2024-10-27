@@ -99,7 +99,7 @@ public class binary extends statement {
       }
     }
     if (!result.isGlobal) {
-      liveVarOut.add(result);
+      defVar.add(result);
     }
   }
 }

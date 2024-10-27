@@ -90,7 +90,7 @@ public class cmp extends statement {
       }
     }
     if (!dest.isGlobal) {
-      liveVarOut.add(dest);
+      defVar.add(dest);
     }
   }
 }
