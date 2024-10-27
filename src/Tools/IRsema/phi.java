@@ -50,9 +50,13 @@ public class phi extends statement {
   public void initialize() {
     for (Entity src : srcs) {
       if (src instanceof register) {
-        liveVarIn.add(((register) src));
+        if (!((register) src).isGlobal) {
+          liveVarIn.add(((register) src));
+        }
       }
     }
-    defVar.add(dst);
+    if (!dst.isGlobal) {
+      defVar.add(dst);
+    }
   }
 }

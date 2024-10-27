@@ -45,8 +45,12 @@ public class trans extends statement {
   @Override
   public void initialize() {
     if (src instanceof register) {
-      liveVarIn.add((register) src);
+      if (!((register) src).isGlobal) {
+        liveVarIn.add((register) src);
+      }
     }
-    defVar.add(dst);
+    if (!dst.isGlobal) {
+      defVar.add(dst);
+    }
   }
 }

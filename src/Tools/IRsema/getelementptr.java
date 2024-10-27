@@ -89,13 +89,19 @@ public class getelementptr extends statement {
   @Override
   public void initialize() {
     if (ptr instanceof register) {
-      liveVarIn.add((register) ptr);
+      if (!((register) ptr).isGlobal) {
+        liveVarIn.add((register) ptr);
+      }
     }
     for (Entity idx : index) {
       if (idx instanceof register) {
-        liveVarIn.add((register) idx);
+        if (!((register) idx).isGlobal) {
+          liveVarIn.add((register) idx);
+        }
       }
     }
-    defVar.add(reg);
+    if (!reg.isGlobal) {
+      defVar.add(reg);
+    }
   }
 }

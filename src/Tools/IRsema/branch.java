@@ -76,7 +76,9 @@ public class branch extends control {
   @Override
   public void initialize() {
     if (condition instanceof register) {
-      liveVarIn.add((register) condition);
+      if (!((register) condition).isGlobal) {
+        liveVarIn.add((register) condition);
+      }
     }
   }
 }

@@ -137,11 +137,15 @@ public class call extends statement {
   @Override
   public void initialize() {
     if (res != null) {
-      defVar.add(res);
+      if (!res.isGlobal) {
+        defVar.add(res);
+      }
     }
     for (Entity arg : args) {
       if (arg instanceof register) {
-        liveVarIn.add((register)arg);
+        if (!((register)arg).isGlobal) {
+          liveVarIn.add((register)arg);
+        }
       }
     }
   }

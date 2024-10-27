@@ -45,8 +45,12 @@ public class let extends statement {
   @Override
   public void initialize() {
     if (rhs instanceof register) {
-      liveVarIn.add((register) rhs);
+      if (!((register) rhs).isGlobal) {
+        liveVarIn.add((register) rhs);
+      }
     }
-    defVar.add(lhs);
+    if (!lhs.isGlobal) {
+      defVar.add(lhs);
+    }
   }
 }

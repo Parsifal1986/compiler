@@ -45,7 +45,11 @@ public class load extends statement {
 
   @Override
   public void initialize() {
-    liveVarIn.add(addr);
-    defVar.add(reg);
+    if (!addr.isGlobal) {
+      liveVarIn.add(addr);
+    }
+    if (!reg.isGlobal) {
+      liveVarIn.add(reg);
+    }
   }
 }

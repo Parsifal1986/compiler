@@ -80,11 +80,17 @@ public class cmp extends statement {
   @Override
   public void initialize() {
     if (src1 instanceof register) {
-      liveVarIn.add((register) src1);
+      if (!((register) src1).isGlobal) {
+        liveVarIn.add((register) src1);
+      }
     }
     if (src2 instanceof register) {
-      liveVarIn.add((register) src2);
+      if (!((register) src2).isGlobal) {
+        liveVarIn.add((register) src2);
+      }
     }
-    defVar.add(dest);
+    if (!dest.isGlobal) {
+      liveVarOut.add(dest);
+    }
   }
 }

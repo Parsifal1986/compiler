@@ -52,7 +52,9 @@ public class ret extends control {
   @Override
   public void initialize() {
     if (retVal instanceof register) {
-      liveVarIn.add((register) retVal);
+      if (!((register) retVal).isGlobal) {
+        liveVarIn.add((register) retVal);
+      }
     }
   }
 }

@@ -47,8 +47,13 @@ public class assign extends statement {
   @Override
   public void initialize() {
     if (right instanceof register) {
-      liveVarIn.add((register) right);
+      register r = (register) right;
+      if (!r.isGlobal) {
+        liveVarIn.add((register) right);
+      }
     }
-    liveVarIn.add(left);
+    if (!left.isGlobal) {
+      liveVarOut.add(left);
+    }
   }
 }

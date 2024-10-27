@@ -89,11 +89,17 @@ public class binary extends statement {
   @Override
   public void initialize() {
     if (lhs instanceof register) {
-      liveVarIn.add((register) lhs);
+      if (!((register) lhs).isGlobal) {
+        liveVarIn.add((register) lhs);
+      }
     }
     if (rhs instanceof register) {
-      liveVarIn.add((register) rhs);
+      if (!((register) rhs).isGlobal) {
+        liveVarIn.add((register) rhs);
+      }
     }
-    defVar.add(result);
+    if (!result.isGlobal) {
+      liveVarOut.add(result);
+    }
   }
 }
