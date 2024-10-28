@@ -38,7 +38,7 @@ public class cmp extends statement {
   @Override
   public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
-    phyreg r0 = regAlloc.GetPhyReg("t0"), r1 = regAlloc.GetPhyReg(src1, 0), r2 = regAlloc.GetPhyReg(src2, 1);
+    phyreg r0 = regAlloc.GetPhyReg(dest, 0), r1 = regAlloc.GetPhyReg(src1, 0), r2 = regAlloc.GetPhyReg(src2, 1);
     if (src1 instanceof constant1 || src1 instanceof constant32) {
       int lval;
       if (src1 instanceof constant1) {
@@ -77,7 +77,7 @@ public class cmp extends statement {
         ret.addAll(regAlloc.LoadToPhyReg(r2, src2));
         switch (op) {
           case eq:
-            if (0 < lval && lval < 4096) {
+            if (0 <= lval && lval < 4096) {
               ret.add(new arithmetic_i(r0, r2, new immnum(lval), Tools.RISCVsema.arithmetic_i.Opcode.xori));
               ret.add(new arithmetic_i(r0, r0, new immnum(1), Tools.RISCVsema.arithmetic_i.Opcode.sltiu));
             } else {
@@ -87,7 +87,7 @@ public class cmp extends statement {
             }
             break;
           case ne:
-            if (0 < lval && lval < 4096) {
+            if (0 <= lval && lval < 4096) {
               ret.add(new arithmetic_i(r0, r2, new immnum(lval), Tools.RISCVsema.arithmetic_i.Opcode.xori));
             } else {
               ret.addAll(regAlloc.LoadToPhyReg(r1, src1));
@@ -134,7 +134,7 @@ public class cmp extends statement {
         }
         switch (op) {
           case eq:
-            if (0 < rval && rval < 4096) {
+            if (0 <= rval && rval < 4096) {
               ret.add(new arithmetic_i(r0, r1, new immnum(rval), Tools.RISCVsema.arithmetic_i.Opcode.xori));
               ret.add(new arithmetic_i(r0, r0, new immnum(1), Tools.RISCVsema.arithmetic_i.Opcode.sltiu));
             } else {
@@ -144,7 +144,7 @@ public class cmp extends statement {
             }
             break;
           case ne:
-            if (0 < rval && rval < 4096) {
+            if (0 <= rval && rval < 4096) {
               ret.add(new arithmetic_i(r0, r1, new immnum(rval), Tools.RISCVsema.arithmetic_i.Opcode.xori));
             } else {
               ret.addAll(regAlloc.LoadToPhyReg(r2, src2));

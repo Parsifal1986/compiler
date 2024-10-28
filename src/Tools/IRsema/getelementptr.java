@@ -9,7 +9,6 @@ import Tools.RISCVsema.arithmetic_i;
 import Tools.RISCVsema.arithmetic_r;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.memory_i;
-import Tools.RISCVsema.Pseudoinstruction.mv;
 import Tools.RISCVsema.operand.immnum;
 import Tools.RISCVsema.operand.phyreg;
 import codegen.RegAlloca;
@@ -45,6 +44,7 @@ public class getelementptr extends statement {
     phyreg t0 = regAlloc.GetPhyReg(ptr, 0);
     phyreg rd = regAlloc.GetPhyReg(reg, 0);
     phyreg t1 = regAlloc.GetPhyReg("t1");
+    ret.addAll(regAlloc.LoadToPhyReg(t0, ptr));
     if (type.equals("i32") || type.equals("i8") || type.equals("ptr")) {
       for (int i = 0; i < index.size(); i++) {
         if (i != 0) {
