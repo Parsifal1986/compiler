@@ -199,7 +199,9 @@ public class RegAlloca {
     ArrayList<command> ret = new ArrayList<>();
     if (rs.isGlobal) {
       ret.add(new load_u(rd, new immtag(rs.globalname, immtag.range.HIGH), load_u.Opcode.lui));
-      ret.add(new memory_i(rd, rd, new immtag(rs.globalname, immtag.range.LOW), memory_i.Opcode.LW));
+      ret.add(new arithmetic_i(rd, rd, new immtag(rs.globalname, immtag.range.LOW), arithmetic_i.Opcode.addi));
+      // ret.add(new load_u(rd, new immtag(rs.globalname, immtag.range.HIGH), load_u.Opcode.lui));
+      // ret.add(new memory_i(rd, rd, new immtag(rs.globalname, immtag.range.LOW), memory_i.Opcode.LW));
     } else if (rs.regId == -1) {
       if (rs.stackpos > 2047 || rs.stackpos < -2048) {
         ret.add(new li(GetPhyReg("t1"), new immnum(rs.stackpos)));

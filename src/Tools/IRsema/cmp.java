@@ -11,7 +11,6 @@ import Tools.RISCVsema.command;
 import Tools.RISCVsema.Pseudoinstruction.li;
 import Tools.RISCVsema.operand.immnum;
 import Tools.RISCVsema.operand.phyreg;
-import Tools.RISCVsema.operand.reg;
 import codegen.RegAlloca;
 
 public class cmp extends statement {

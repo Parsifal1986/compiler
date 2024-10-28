@@ -104,16 +104,17 @@ public class declaration {
     for (statement s : global) {
       if (s instanceof stringconst) {
         stringconst sc = (stringconst)s;
-        rodatasection rodata = new rodatasection(sc.initialize, ".L" + sc.reg.name, false);
-        datasection data = new datasection(new immtag(".L" + sc.reg.name, immtag.range.FULL), sc.reg.name, true, datasection.classtype.WORD);
+        rodatasection rodata = new rodatasection(sc.initialize, sc.reg.name, false);
+        // rodatasection rodata = new rodatasection(sc.initialize, ".L" + sc.reg.name, false);
+        // datasection data = new datasection(new immtag(".L" + sc.reg.name, immtag.range.FULL), sc.reg.name, true, datasection.classtype.WORD);
         res.add(rodata);
-        res.add(data);
+        // res.add(data);
       } else if (s instanceof globalvar) {
         globalvar gv = (globalvar)s;
-        bsssection bss = new bsssection(gv.type.equals("i1") ? 1 : 4, ".D" + gv.reg.name, true);
-        datasection data = new datasection(new immtag(".D" + gv.reg.name, immtag.range.FULL), gv.reg.name, true, datasection.classtype.WORD);
+        bsssection bss = new bsssection(gv.type.equals("i1") ? 1 : 4, gv.reg.name, true);
+        // datasection data = new datasection(new immtag(".D" + gv.reg.name, immtag.range.FULL), gv.reg.name, true, datasection.classtype.WORD);
         res.add(bss);
-        res.add(data);
+        // res.add(data);
       }
     }
     return res;
