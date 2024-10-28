@@ -4,7 +4,7 @@ import Tools.RISCVsema.command;
 import Tools.RISCVsema.operand.imm;
 import Tools.RISCVsema.operand.phyreg;
 
-public class li extends command{
+public class li extends command {
   phyreg rd;
   public imm imm;
 

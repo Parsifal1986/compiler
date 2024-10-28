@@ -14,6 +14,7 @@ import Tools.RISCVsema.command;
 import Tools.RISCVsema.load_u;
 import Tools.RISCVsema.memory_i;
 import Tools.RISCVsema.memory_s;
+import Tools.RISCVsema.Pseudoinstruction.la;
 import Tools.RISCVsema.Pseudoinstruction.li;
 import Tools.RISCVsema.Pseudoinstruction.mv;
 import Tools.RISCVsema.operand.immnum;
@@ -198,8 +199,9 @@ public class RegAlloca {
   public ArrayList<command> LoadToPhyReg(phyreg rd, virtreg rs) {
     ArrayList<command> ret = new ArrayList<>();
     if (rs.isGlobal) {
-      ret.add(new load_u(rd, new immtag(rs.globalname, immtag.range.HIGH), load_u.Opcode.lui));
-      ret.add(new arithmetic_i(rd, rd, new immtag(rs.globalname, immtag.range.LOW), arithmetic_i.Opcode.addi));
+      ret.add(new la(rd, rs.globalname));
+      // ret.add(new load_u(rd, new immtag(rs.globalname, immtag.range.HIGH), load_u.Opcode.lui));
+      // ret.add(new arithmetic_i(rd, rd, new immtag(rs.globalname, immtag.range.LOW), arithmetic_i.Opcode.addi));
       // ret.add(new load_u(rd, new immtag(rs.globalname, immtag.range.HIGH), load_u.Opcode.lui));
       // ret.add(new memory_i(rd, rd, new immtag(rs.globalname, immtag.range.LOW), memory_i.Opcode.LW));
     } else if (rs.regId == -1) {
@@ -241,8 +243,9 @@ public class RegAlloca {
   public ArrayList<command> GetVirtregAddr(phyreg reg, virtreg vr) {
     ArrayList<command> ret = new ArrayList<>();
     if (vr.isGlobal) {
-      ret.add(new load_u(reg, new immtag(vr.globalname, immtag.range.HIGH), load_u.Opcode.lui));
-      ret.add(new arithmetic_i(reg, reg, new immtag(vr.globalname, immtag.range.LOW), arithmetic_i.Opcode.addi));
+      // ret.add(new load_u(reg, new immtag(vr.globalname, immtag.range.HIGH), load_u.Opcode.lui));
+      // ret.add(new arithmetic_i(reg, reg, new immtag(vr.globalname, immtag.range.LOW), arithmetic_i.Opcode.addi));
+      ret.add(new la(reg, vr.globalname));
     } else {
       if (vr.stackpos > 2047 || vr.stackpos < -2048) {
         ret.add(new li(GetPhyReg("t1"), new immnum(vr.stackpos)));

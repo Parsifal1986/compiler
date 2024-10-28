@@ -36,7 +36,7 @@ public class binary extends statement {
   }
 
   @Override
-  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+  public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
     phyreg r0 = regAlloc.GetPhyReg(result, 0), r1 = regAlloc.GetPhyReg(lhs, 0), r2 = regAlloc.GetPhyReg(rhs, 1);
     if (lhs instanceof constant1 || lhs instanceof constant32) {

@@ -9,12 +9,13 @@ public class block {
   public ArrayList<statement> statements = new ArrayList<>();
   public control next;
   public static int cnt = 0;
-  public boolean isprint = false;
-  public boolean istrans = false;
-  public boolean isclean = false;
-  public boolean ismem2reg = false;
-  public boolean isrename = false;
+  public boolean isPrint = false;
+  public boolean isTrans = false;
+  public boolean isClean = false;
+  public boolean isMem2reg = false;
+  public boolean isRename = false;
   public HashSet<block> pre = new HashSet<>();
+  public boolean hasDce = false;
   public ArrayList<block> e = new ArrayList<>();
   public HashSet<block> frontier = new HashSet<>();
   public ArrayList<phi> phisInOrder = new ArrayList<>();

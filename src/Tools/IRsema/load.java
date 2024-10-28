@@ -26,7 +26,7 @@ public class load extends statement {
   }
 
   @Override
-  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+  public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
     phyreg r0 = regAlloc.GetPhyReg(regAlloc.GetVirtReg(reg), 0), r1 = regAlloc.GetPhyReg(regAlloc.GetVirtReg(addr), 1);
     ret.addAll(regAlloc.LoadToPhyReg(r1, addr));

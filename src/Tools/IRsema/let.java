@@ -24,7 +24,7 @@ public class let extends statement {
   }
 
   @Override
-  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+  public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
     phyreg r0;
     if (rhs instanceof register) {

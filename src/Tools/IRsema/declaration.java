@@ -4,10 +4,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import Tools.Class;
 import Tools.globalscope;
-import Tools.RISCVsema.operand.immtag;
 import Tools.RISCVsema.section.asmsection;
 import Tools.RISCVsema.section.bsssection;
-import Tools.RISCVsema.section.datasection;
 import Tools.RISCVsema.section.rodatasection;
 
 public class declaration {
@@ -64,34 +62,6 @@ public class declaration {
     out.println("declare i32 @_array.size(ptr)");
     out.println("declare ptr @malloc(i32)");
     out.println("declare ptr @booltoString(i1)");
-    out.println();
-    // for (String keySet : gscope.functions.keySet()) {
-    //   out.print("declare " + gscope.functions.get(keySet).ToIrType() + " @" + gscope.functionrename.get(keySet) + "(");
-    //   for (int i = 0; i < gscope.funcparams.get(keySet).size(); i++) {
-    //     out.print(gscope.funcparams.get(keySet).get(i).ToIrType() + " %." + gscope.funcparams.get(keySet).get(i).ToIrType());
-    //     if (i != gscope.funcparams.get(keySet).size() - 1) {
-    //       out.print(", ");
-    //     }
-    //   }
-    //   out.println(")");
-    // }
-    // for (Class values : gscope.classes.values()) {
-    //   for (String keySet : values.functions.keySet()) {
-    //     out.print("declare " + values.functions.get(keySet).ToIrType() + " @" + values.functionrename.get(keySet) + "(");
-    //     for (int i = 0; i < values.funcparams.get(keySet).size(); i++) {
-    //       out.print(values.funcparams.get(keySet).get(i).ToIrType() + " %." + values.funcparams.get(keySet).get(i).ToIrType());
-    //       if (i != values.funcparams.get(keySet).size() - 1) {
-    //         out.print(", ");
-    //       }
-    //     }
-    //     out.println(")");
-    //   }
-    // }
-    // for (Class values : gscope.classes.values()) {
-    //   for (String values2 : values.functionrename.values()) {
-    //     out.println("$" + values2 + "() = comdat any");
-    //   }
-    // }
     out.println();
     for (statement s : global) {
       s.print(out);

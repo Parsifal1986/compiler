@@ -26,7 +26,7 @@ public class assign extends statement {
   }
 
   @Override
-  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+  public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
     phyreg data = regAlloc.GetPhyReg(right, 1);
     phyreg addr = regAlloc.GetPhyReg(left, 0);

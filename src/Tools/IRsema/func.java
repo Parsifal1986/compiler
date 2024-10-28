@@ -88,6 +88,16 @@ public class func {
     }
   }
 
+  public static class VitalVarElement {
+    public block b;
+    public HashSet<register> vitalVar;
+
+    public VitalVarElement(block b, HashSet<register> vitalVar) {
+      this.b = b;
+      this.vitalVar = vitalVar;
+    }
+  }
+
   public func() {
     entry = new ArrayList<>();
     args = new ArrayList<register>();
@@ -120,10 +130,10 @@ public class func {
     q.add(headblock);
     while (q.size() > 0) {
       block current = q.poll();
-      if (current.isprint) {
+      if (current.isPrint) {
         continue;
       }
-      current.isprint = true;
+      current.isPrint = true;
       out.println(current.name + ":");
       if (current.statements.size() > 0) {
         for (statement s : current.statements) {
@@ -220,10 +230,10 @@ public class func {
     workList.add(new ReplaceQueueElement(headblock, replaceval));
     while (!workList.isEmpty()) {
       ReplaceQueueElement e = workList.poll();
-      if (e.b.ismem2reg) {
+      if (e.b.isMem2reg) {
         continue;
       }
-      e.b.ismem2reg = true;
+      e.b.isMem2reg = true;
       for (register keySet : e.b.phis.keySet()) {
         phi p = e.b.phis.get(keySet);
         e.replaceval.put(keySet, p.dst);
@@ -272,10 +282,10 @@ public class func {
     q.add(headblock);
     while (!q.isEmpty()) {
       block current = q.poll();
-      if (current.isrename) {
+      if (current.isRename) {
         continue;
       }
-      current.isrename = true;
+      current.isRename = true;
       for (int i = 0; i < current.statements.size(); i++) {
         statement s = current.statements.get(i);
         s.rename(renameTable);
@@ -287,8 +297,12 @@ public class func {
     }
   }
 
-  public void analyze() {
+  public void process() {
     HashSet<block> visited = new HashSet<>();
+    dfs(visited, headblock);
+  }
+
+  public void analyze() {
     HashMap<register, Interval> intervalMap = new HashMap<>();
     ArrayList<register> argsReg = new ArrayList<>();
     for (int i = 0; i < Math.min(8, args.size()); i++) {
@@ -297,7 +311,6 @@ public class func {
       argsReg.add(tmp);
       intervalMap.put(args.get(i), new Interval(i + 1, i + 1));
     }
-    dfs(visited, headblock);
     for (block outBlock : outBlocks) {
       outBlock.checkLive(new HashSet<>());
     }
@@ -409,6 +422,171 @@ public class func {
     }
     linearOrder.add(current);
   }
+  
+  public void cleanPhi() {
+    HashMap<String, block> labelMap = new HashMap<>();
+    Queue<block> q = new LinkedList<block>();
+    ArrayList<block> allBlocks = new ArrayList<>();
+    labelMap.put(headblock.name, headblock);
+    q.add(headblock);
+    while (q.size() > 0) {
+      block current = q.poll();
+      labelMap.put(current.name, current);
+      if (current.isClean) {
+        continue;
+      }
+      current.isClean = true;
+      allBlocks.add(current);
+      if (current.statements.size() > 0) {
+        Iterator<statement> it = current.statements.iterator();
+        while (it.hasNext()) {
+          statement s = it.next();
+          if (s instanceof phi) {
+            phi p = (phi) s;
+            current.allPhis.put(p.dst, p);
+            it.remove();
+          }
+        }
+      }
+      if (current.next != null) {
+        current.next.next().forEach(q::add);
+      }
+    }
+    HashSet<block> hasTmpSet = new HashSet<>();
+    for (block b : allBlocks) {
+      HashMap<register, register> tmpMap = new HashMap<>();
+      for (phi p : b.allPhis.values()) {
+        for (int i = 0; i < p.srcs.size(); i++) {
+          block src = labelMap.get(p.labels.get(i));
+          if (p.srcs.get(i) instanceof register) {
+            register r = (register) p.srcs.get(i);
+            if (b.allPhis.containsKey(r)) {
+              if (tmpMap.containsKey(r)) {
+                p.srcs.set(i, tmpMap.get(r));
+              } else {
+                register tmp = new register(r.type);
+                src.addInFront(new let(tmp, r));
+                tmpMap.put(r, tmp);
+                p.srcs.set(i, tmp);
+              }
+            }
+          }
+          boolean flag = false;
+          if (src.next instanceof branch) {
+            for (block next : src.next.next()) {
+              if (next.allPhis.size() != 0 && next != b) {
+                block tmp;
+                if (!src.tmpBlocks.containsKey(b)) {
+                  tmp = new block("tmpPhis");
+                  src.tmpBlocks.put(b, tmp);
+                  hasTmpSet.add(src);
+                  tmp.pre.add(src);
+                  tmp.next = new branch(null, b, null);
+                } else {
+                  tmp = src.tmpBlocks.get(b);
+                }
+                tmp.add(new let(p.dst, p.srcs.get(i)));
+                flag = true;
+                break;
+              }
+            }
+          }
+          if (!flag) {
+            src.add(new let(p.dst, p.srcs.get(i)));
+          }
+        }
+      }
+    }
+
+    for (block srcBlock : hasTmpSet) {
+      branch br = (branch) srcBlock.next;
+      for (block values : srcBlock.tmpBlocks.values()) {
+        block next = values.next.next().get(0);
+        if (br.trueBlock == next) {
+          br.trueBlock = values;
+        } else {
+          br.falseBlock = values;
+        }
+        next.pre.remove(srcBlock);
+        next.pre.add(values);
+      }
+    }
+  }
+
+  public void dce() {
+    HashSet<register> haveChecked = new HashSet<>();
+    Queue<register> toBeLive = new LinkedList<>();
+    HashMap<register, ArrayList<statement>> defMap = new HashMap<>();
+    HashSet<block> visited = new HashSet<>();
+    Queue<block> q = new LinkedList<>();
+    q.add(headblock);
+    while (q.size() > 0) {
+      block current = q.poll();
+      if (visited.contains(current)) {
+        continue;
+      }
+      visited.add(current);
+      if (current.statements.size() > 0) {
+        for (statement s : current.statements) {
+          if (s instanceof assign || s instanceof call) {
+            s.isDead = false;
+            toBeLive.addAll(s.liveVarIn);
+          }
+          for (register r : s.defVar) {
+            if (!defMap.containsKey(r)) {
+              defMap.put(r, new ArrayList<>());
+            }
+            defMap.get(r).add(s);
+          }
+        }
+      }
+      if (current.next != null) {
+        current.next.next().forEach(q::add);
+        toBeLive.addAll(current.next.liveVarIn);
+      }
+    }
+    visited.clear();
+    while (toBeLive.size() > 0) {
+      register current = toBeLive.poll();
+      if (haveChecked.contains(current)) {
+        continue;
+      }
+      haveChecked.add(current);
+      if (!defMap.containsKey(current)) {
+        continue;
+      }
+      for (statement s : defMap.get(current)) {
+        if (!s.isDead) {
+          continue;
+        }
+        for (register r : s.liveVarIn) {
+          toBeLive.add(r);
+        }
+        s.isDead = false;
+      }
+    }
+    Queue<block> q2 = new LinkedList<>();
+    q2.add(headblock);
+    while (q2.size() > 0) {
+      block current = q2.poll();
+      if (visited.contains(current)) {
+        continue;
+      }
+      visited.add(current);
+      if (current.statements.size() > 0) {
+        Iterator<statement> it = current.statements.iterator();
+        while (it.hasNext()) {
+          statement s = it.next();
+          if (s.isDead) {
+            it.remove();
+          }
+        }
+      }
+      if (current.next != null) {
+        current.next.next().forEach(q2::add);
+      }
+    }
+  }
 
   public asmsection trans() {
     textsection text = new textsection(name, true);
@@ -450,18 +628,18 @@ public class func {
     q.add(headblock);
     while (q.size() > 0) {
       block current = q.poll();
-      if (current.istrans) {
+      if (current.isTrans) {
         continue;
       }
-      current.istrans = true;
+      current.isTrans = true;
       ArrayList<command> tmp = new ArrayList<>();
       if (current.statements.size() > 0) {
         for (int i = 0; i < current.statements.size(); i++) {
-          tmp.addAll(current.statements.get(i).toAsm(regAlloca));
+          tmp.addAll(current.statements.get(i).toasm(regAlloca));
         }
       }
       if (current.next != null) {
-        tmp.addAll(current.next.toAsm(regAlloca));
+        tmp.addAll(current.next.toasm(regAlloca));
         if (current.next.next().size() == 0) {
           for (Integer keySet : calleeSavedMap.keySet()) {
             tmp.addAll(tmp.size() - 1, regAlloca.LoadToPhyReg(regAlloca.GetPhyReg(keySet), regAlloca.GetVirtReg(calleeSavedMap.get(keySet))));
@@ -484,95 +662,5 @@ public class func {
     ((li)text.commands.get(1)).imm = new immnum(0 - stacksize);
     text.stacksize = stacksize;
     return text;
-  }
-
-  public void cleanPhi() {
-    HashMap<String, block> labelMap = new HashMap<>();
-    Queue<block> q = new LinkedList<block>();
-    ArrayList<block> allBlocks = new ArrayList<>();
-    labelMap.put(headblock.name, headblock);
-    q.add(headblock);
-    while (q.size() > 0) {
-      block current = q.poll();
-      labelMap.put(current.name, current);
-      if (current.isclean) {
-        continue;
-      }
-      current.isclean = true;
-      allBlocks.add(current);
-      if (current.statements.size() > 0) {
-        Iterator<statement> it = current.statements.iterator();
-        while(it.hasNext()) {
-          statement s = it.next();
-          if (s instanceof phi) {
-            phi p = (phi)s;
-            current.allPhis.put(p.dst, p);
-            it.remove();
-          }
-        }
-      }
-      if (current.next != null) {
-        current.next.next().forEach(q::add);
-      }
-    }
-    HashSet<block> hasTmpSet = new HashSet<>();
-    for (block b : allBlocks) {
-      HashMap<register, register> tmpMap = new HashMap<>();
-      for (phi p : b.allPhis.values()) {
-        for (int i = 0; i < p.srcs.size(); i++) {
-          block src = labelMap.get(p.labels.get(i));
-          if (p.srcs.get(i) instanceof register) {
-            register r = (register)p.srcs.get(i);
-            if (b.allPhis.containsKey(r)) {
-              if (tmpMap.containsKey(r)) {
-                p.srcs.set(i, tmpMap.get(r));
-              } else {
-                register tmp = new register(r.type);
-                src.addInFront(new let(tmp, r));
-                tmpMap.put(r, tmp);
-                p.srcs.set(i, tmp);
-              }
-            }
-          }
-          boolean flag = false;
-          if (src.next instanceof branch) {
-            for (block next : src.next.next()) {
-              if (next.allPhis.size() != 0 && next != b) {
-                block tmp;
-                if (!src.tmpBlocks.containsKey(b)) {
-                  tmp = new block("tmpPhis");
-                  src.tmpBlocks.put(b, tmp);
-                  hasTmpSet.add(src);
-                  tmp.pre.add(src);
-                  tmp.next = new branch(null, b, null);
-                } else {
-                  tmp = src.tmpBlocks.get(b);
-                }
-                tmp.add(new let(p.dst, p.srcs.get(i)));
-                flag = true;
-                break;
-              }
-            }
-          }
-          if (!flag) {
-            src.add(new let(p.dst, p.srcs.get(i)));
-          }
-        }
-      }
-    }
-    
-    for (block srcBlock : hasTmpSet) {
-      branch br = (branch)srcBlock.next;
-      for (block values : srcBlock.tmpBlocks.values()) {
-        block next = values.next.next().get(0);
-        if (br.trueBlock == next) {
-          br.trueBlock = values;
-        } else {
-          br.falseBlock = values;
-        }
-        next.pre.remove(srcBlock);
-        next.pre.add(values);
-      }
-    }
   }
 }

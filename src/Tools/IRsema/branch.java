@@ -42,7 +42,7 @@ public class branch extends control {
   }
 
   @Override
-  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+  public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
     phyreg x0 = regAlloc.GetPhyReg("zero");
     phyreg r0;

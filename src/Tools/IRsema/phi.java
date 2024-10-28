@@ -32,7 +32,7 @@ public class phi extends statement {
   }
 
   @Override
-  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+  public ArrayList<command> toasm(RegAlloca regAlloc) {
     return null;
   }
 

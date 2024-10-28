@@ -36,7 +36,7 @@ public class cmp extends statement {
   }
 
   @Override
-  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+  public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
     phyreg r0 = regAlloc.GetPhyReg("t0"), r1 = regAlloc.GetPhyReg(src1, 0), r2 = regAlloc.GetPhyReg(src2, 1);
     if (src1 instanceof constant1 || src1 instanceof constant32) {

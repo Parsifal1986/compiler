@@ -45,7 +45,7 @@ public class call extends statement {
   }
 
   @Override
-  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+  public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
     if (funcname.equals("newarray")) {
       ((constant32)args.get(1)).value = 4;

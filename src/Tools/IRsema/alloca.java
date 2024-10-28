@@ -32,7 +32,7 @@ public class alloca extends statement {
   }
 
   @Override
-  public ArrayList<command> toAsm(RegAlloca regAlloca) {
+  public ArrayList<command> toasm(RegAlloca regAlloca) {
     ArrayList<command> ret = new ArrayList<>();
     virtreg space = regAlloca.GetVirtReg(new register("")), ptr = regAlloca.GetVirtReg(reg);
     phyreg sp = regAlloca.GetPhyReg("sp");

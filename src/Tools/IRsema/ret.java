@@ -30,7 +30,7 @@ public class ret extends control {
   }
 
   @Override
-  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+  public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
     if (retVal != null) {
       ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg("a0"), retVal));

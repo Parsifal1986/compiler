@@ -26,8 +26,10 @@ import Tools.IRsema.func;
 import Tools.RISCVsema.section.asmsection;
 import codegen.ASMPrinter;
 import codegen.ASMTranslator;
+import codegen.DCE;
 import codegen.Mem2Reger;
 import codegen.PhiCleaner;
+import codegen.Processor;
 import codegen.RegAllocator;
 import codegen.Renamer;
 
@@ -70,6 +72,10 @@ public class Compiler {
       // irPrinter.print();
       PhiCleaner phiCleaner = new PhiCleaner(functions);
       phiCleaner.cleanPhi();
+      Processor processor = new Processor(functions);
+      processor.process();
+      DCE dce = new DCE(functions);
+      dce.Eliminate();
       RegAllocator regAllocator = new RegAllocator(functions);
       regAllocator.alloc();
       ArrayList<asmsection> sections = new ArrayList<asmsection>();

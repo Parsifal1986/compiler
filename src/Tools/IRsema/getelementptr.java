@@ -40,7 +40,7 @@ public class getelementptr extends statement {
   }
 
   @Override
-  public ArrayList<command> toAsm(RegAlloca regAlloc) {
+  public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
     phyreg t0 = regAlloc.GetPhyReg("t0");
     phyreg t1 = regAlloc.GetPhyReg("t1");

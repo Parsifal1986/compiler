@@ -13,6 +13,7 @@ abstract public class statement {
   public HashSet<register> liveVarIn, liveVarOut;
   public HashSet<register> defVar;
   boolean hasChecked = false;
+  boolean isDead = true;
 
   public statement() {
     liveVarIn = new HashSet<>();
@@ -35,7 +36,7 @@ abstract public class statement {
 
   abstract public void print(PrintStream out);
 
-  abstract public ArrayList<command> toAsm(RegAlloca regAlloc);
+  abstract public ArrayList<command> toasm(RegAlloca regAlloc);
 
   abstract public void rename(HashMap<register, Entity> renameMap);
 
