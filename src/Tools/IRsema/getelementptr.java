@@ -42,22 +42,18 @@ public class getelementptr extends statement {
   @Override
   public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
-    phyreg t0 = regAlloc.GetPhyReg("t0");
+    phyreg t0 = regAlloc.GetPhyReg(ptr, 0);
     phyreg rd = regAlloc.GetPhyReg(reg, 0);
     phyreg t1 = regAlloc.GetPhyReg("t1");
-    if (ptr instanceof register) {
-      ret.addAll(regAlloc.LoadToPhyReg(t0, regAlloc.GetVirtReg((register) ptr)));
-    } else {
-      ret.add(new mv(t0, regAlloc.GetPhyReg("zero")));
-    }
     if (type.equals("i32") || type.equals("i8") || type.equals("ptr")) {
       for (int i = 0; i < index.size(); i++) {
         if (i != 0) {
           ret.add(new memory_i(t0, t0, new immnum(0), memory_i.Opcode.LW));
         }
         Entity idx = index.get(i);
-        ret.addAll(regAlloc.LoadToPhyReg(t1, idx));
-        ret.add(new arithmetic_i(t1, t1, new immnum(2), arithmetic_i.Opcode.slli));
+        phyreg idr = regAlloc.GetPhyReg(idx, 1);
+        ret.addAll(regAlloc.LoadToPhyReg(idr, idx));
+        ret.add(new arithmetic_i(t1, idr, new immnum(2), arithmetic_i.Opcode.slli));
         ret.add(new arithmetic_r(rd, t0, t1, arithmetic_r.Opcode.add));
       }
     } else {
@@ -66,8 +62,9 @@ public class getelementptr extends statement {
           ret.add(new memory_i(t0, t0, new immnum(0), memory_i.Opcode.LW));
         }
         Entity idx = index.get(i);
-        ret.addAll(regAlloc.LoadToPhyReg(t1, idx));
-        ret.add(new arithmetic_i(t1, t1, new immnum(2), arithmetic_i.Opcode.slli));
+        phyreg idr = regAlloc.GetPhyReg(idx, 1);
+        ret.addAll(regAlloc.LoadToPhyReg(idr, idx));
+        ret.add(new arithmetic_i(t1, idr, new immnum(2), arithmetic_i.Opcode.slli));
         ret.add(new arithmetic_r(rd, t0, t1, arithmetic_r.Opcode.add));
       }
     }
