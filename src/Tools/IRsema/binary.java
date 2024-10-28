@@ -40,13 +40,14 @@ public class binary extends statement {
     ArrayList<command> ret = new ArrayList<>();
     phyreg r0 = regAlloc.GetPhyReg(result, 0), r1 = regAlloc.GetPhyReg(lhs, 0), r2 = regAlloc.GetPhyReg(rhs, 1);
     if (lhs instanceof constant1 || lhs instanceof constant32) {
+      int lval;
+      if (lhs instanceof constant1) {
+        lval = ((constant1) lhs).value ? 1 : 0;
+      } else {
+        lval = ((constant32) lhs).value;
+      }
       if (rhs instanceof constant1 || rhs instanceof constant32) {
-        int lval, rval;
-        if (lhs instanceof constant1) {
-          lval = ((constant1) lhs).value ? 1 : 0;
-        } else {
-          lval = ((constant32) lhs).value;
-        }
+        int rval;
         if (rhs instanceof constant1) {
           rval = ((constant1) rhs).value ? 1 : 0;
         } else {
@@ -98,12 +99,6 @@ public class binary extends statement {
         }
       } else {
         ret.addAll(regAlloc.LoadToPhyReg(r2, rhs));
-        int lval;
-        if (lhs instanceof constant1) {
-          lval = ((constant1) lhs).value ? 1 : 0;
-        } else {
-          lval = ((constant32) lhs).value;
-        }
         switch (op) {
           case add:
             if (-2048 <= lval && lval < 2048) {
