@@ -43,6 +43,7 @@ public class getelementptr extends statement {
   public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
     phyreg t0 = regAlloc.GetPhyReg("t0");
+    phyreg rd = regAlloc.GetPhyReg(reg, 0);
     phyreg t1 = regAlloc.GetPhyReg("t1");
     if (ptr instanceof register) {
       ret.addAll(regAlloc.LoadToPhyReg(t0, regAlloc.GetVirtReg((register) ptr)));
@@ -57,7 +58,7 @@ public class getelementptr extends statement {
         Entity idx = index.get(i);
         ret.addAll(regAlloc.LoadToPhyReg(t1, idx));
         ret.add(new arithmetic_i(t1, t1, new immnum(2), arithmetic_i.Opcode.slli));
-        ret.add(new arithmetic_r(t0, t0, t1, arithmetic_r.Opcode.add));
+        ret.add(new arithmetic_r(rd, t0, t1, arithmetic_r.Opcode.add));
       }
     } else {
       for (int i = 1; i < index.size(); i++) {
@@ -67,10 +68,10 @@ public class getelementptr extends statement {
         Entity idx = index.get(i);
         ret.addAll(regAlloc.LoadToPhyReg(t1, idx));
         ret.add(new arithmetic_i(t1, t1, new immnum(2), arithmetic_i.Opcode.slli));
-        ret.add(new arithmetic_r(t0, t0, t1, arithmetic_r.Opcode.add));
+        ret.add(new arithmetic_r(rd, t0, t1, arithmetic_r.Opcode.add));
       }
     }
-    ret.addAll(regAlloc.StorePhyReg(t0, regAlloc.GetVirtReg(reg)));
+    ret.addAll(regAlloc.StorePhyReg(rd, regAlloc.GetVirtReg(reg)));
     return ret;
   }
 

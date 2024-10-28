@@ -26,14 +26,9 @@ public class let extends statement {
   @Override
   public ArrayList<command> toasm(RegAlloca regAlloc) {
     ArrayList<command> ret = new ArrayList<>();
-    phyreg r0;
-    if (rhs instanceof register) {
-      r0 = regAlloc.GetPhyReg(regAlloc.GetVirtReg((register) rhs));
-    } else {
-      r0 = regAlloc.GetPhyReg("t0");
-    }
-    ret.addAll(regAlloc.LoadToPhyReg(r0, rhs));
-    ret.addAll(regAlloc.StorePhyReg(r0, regAlloc.GetVirtReg(lhs)));
+    phyreg rd = regAlloc.GetPhyReg(regAlloc.GetVirtReg(lhs), 0);
+    ret.addAll(regAlloc.LoadToPhyReg(rd, rhs));
+    ret.addAll(regAlloc.StorePhyReg(rd, regAlloc.GetVirtReg(lhs)));
     return ret;
   }
 
