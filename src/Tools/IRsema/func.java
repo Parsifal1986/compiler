@@ -411,9 +411,9 @@ public class func {
     }
     if (current.next != null) {
       current.next.initialize();
-      current.next.next().forEach(
-        next -> dfs(visited, next)
-      );
+      for (block next : current.next.next()) {
+        dfs(visited, next);
+      }
       if (current.next.next().size() == 0) {
         outBlocks.add(current);
       }
