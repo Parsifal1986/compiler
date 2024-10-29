@@ -385,6 +385,18 @@ public class func {
     }
     while (!pq.isEmpty()) {
       register e = pq.poll();
+      Iterator<PhyRegister> it = regPool.iterator();
+      while (it.hasNext()) {
+        PhyRegister pr = it.next();
+        if (pr.reg.interval.end < e.interval.start) {
+          it.remove();
+          register tmp = new register("i32");
+          tmp.interval = new Interval(-1, -1);
+          pr.reg = tmp;
+          regPool.add(pr);
+          break;
+        }
+      }
       if (regPool.peek().reg.interval.end < e.interval.start) {
         PhyRegister pr = regPool.poll();
         regPool.add(new PhyRegister(pr.id, e));
