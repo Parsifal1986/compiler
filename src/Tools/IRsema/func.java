@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.TreeSet;
 
 import Tools.Entity;
 import Tools.Interval;
@@ -451,12 +452,12 @@ public class func {
         return startComparison;
       }
     });
-    PriorityQueue <PhyRegister> regPool = new PriorityQueue<>(new Comparator<PhyRegister>() {
+    TreeSet <PhyRegister> regPool = new TreeSet<>(new Comparator<PhyRegister>() {
       @Override
       public int compare(PhyRegister a, PhyRegister b) {
         int endComparison = a.reg.interval.end.compareTo(b.reg.interval.end);
         if (endComparison == 0) {
-          return a.reg.regId - b.reg.regId;
+          return a.id - b.id;
         }
         return endComparison;
       }
@@ -475,6 +476,7 @@ public class func {
     while (!pq.isEmpty()) {
       register e = pq.poll();
       Iterator<PhyRegister> it = regPool.iterator();
+      ArrayList<PhyRegister> toBeAdd = new ArrayList<>();
       while (it.hasNext()) {
         PhyRegister pr = it.next();
         if (pr.reg.interval.end < e.interval.start) {
@@ -482,17 +484,21 @@ public class func {
           register tmp = new register("i32");
           tmp.interval = new Interval(-1, -1);
           pr.reg = tmp;
-          regPool.add(pr);
+          toBeAdd.add(pr);
+        } else {
           break;
         }
       }
-      if (regPool.peek().reg.interval.end < e.interval.start) {
-        PhyRegister pr = regPool.poll();
+      for (PhyRegister p : toBeAdd) {
+        regPool.add(p);
+      }
+      if (regPool.first().reg.interval.end < e.interval.start) {
+        PhyRegister pr = regPool.pollFirst();
         regPool.add(new PhyRegister(pr.id, e));
         e.regId = pr.id;
         calleeUsedReg.add(pr.id);
-      } else if (regPool.peek().reg.interval.end > e.interval.end) {
-        PhyRegister pr = regPool.poll();
+      } else if (regPool.last().reg.interval.end > e.interval.end) {
+        PhyRegister pr = regPool.pollLast();
         regPool.add(new PhyRegister(pr.id, e));
         e.regId = pr.id;
         pr.reg.regId = -1;
