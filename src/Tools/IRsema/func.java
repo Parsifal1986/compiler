@@ -545,16 +545,20 @@ public class func {
       }
       current.isClean = true;
       allBlocks.add(current);
+      int cnt = 0;
       if (current.statements.size() > 0) {
-        Iterator<statement> it = current.statements.iterator();
-        while (it.hasNext()) {
-          statement s = it.next();
+        for (int i = 0; i < current.statements.size(); i++) {
+          statement s = current.statements.get(i);
           if (s instanceof phi) {
+            cnt++;
             phi p = (phi) s;
             current.allPhis.put(p.dst, p);
-            it.remove();
+            current.phiCnt.put(p, cnt);
+            current.statements.remove(i);
+            i--;
           }
         }
+        current.firstPhi = current.statements.size();
       }
       if (current.next != null) {
         current.next.next().forEach(q::add);
@@ -568,12 +572,12 @@ public class func {
           block src = labelMap.get(p.labels.get(i));
           if (p.srcs.get(i) instanceof register) {
             register r = (register) p.srcs.get(i);
-            if (b.allPhis.containsKey(r)) {
+            if (b.allPhis.containsKey(r) && b.allPhis.get(r) != p) {
               if (tmpMap.containsKey(r)) {
                 p.srcs.set(i, tmpMap.get(r));
               } else {
                 register tmp = new register(r.type);
-                src.addInFront(new let(tmp, r));
+                src.add(src.firstPhi, new let(tmp, r));
                 tmpMap.put(r, tmp);
                 p.srcs.set(i, tmp);
               }

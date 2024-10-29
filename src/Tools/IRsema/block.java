@@ -21,7 +21,9 @@ public class block {
   public ArrayList<phi> phisInOrder = new ArrayList<>();
   public HashMap<register, phi> phis = new HashMap<>();
   public HashMap<register, phi> allPhis = new HashMap<>();
+  // public HashMap<phi, Integer> phiCnt = new HashMap<>();
   public HashMap<block, block> tmpBlocks = new HashMap<>();
+  public int firstPhi = -1;
 
   public block newblock(String name) {
     block tmp = new block(name);
@@ -38,6 +40,10 @@ public class block {
 
   public void add(statement s) {
     statements.add(s);
+  }
+
+  public void add(int index, statement s) {
+    statements.add(index, s);
   }
 
   public void addInFront(statement s) {
