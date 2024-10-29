@@ -50,14 +50,26 @@ public class branch extends control {
       if (condition instanceof register) {
         virtreg conditionv = regAlloc.GetVirtReg((register) condition);
         r0 = regAlloc.GetPhyReg(conditionv);
+        ret.addAll(regAlloc.LoadToPhyReg(r0, condition));
+        String falseBranchName = "branch_false" + branchCount++;
+        ret.add(new control_b(r0, x0, falseBranchName, control_b.Opcode.BEQ));
+        ret.add(new control_i(x0, trueBlock.name));
+        ret.add(new control_i(x0, falseBlock.name, falseBranchName));
       } else {
-        r0 = regAlloc.GetPhyReg("t0");
+        if (condition instanceof constant1) {
+          if (((constant1)condition).value) {
+            ret.add(new control_i(x0, trueBlock.name));
+          } else {
+            ret.add(new control_i(x0, falseBlock.name));
+          }
+        } else {
+          if (((constant32) condition).value != 0) {
+            ret.add(new control_i(x0, trueBlock.name));
+          } else {
+            ret.add(new control_i(x0, falseBlock.name));
+          }
+        }
       }
-      ret.addAll(regAlloc.LoadToPhyReg(r0, condition));
-      String falseBranchName = "branch_false" + branchCount++;
-      ret.add(new control_b(r0, x0, falseBranchName, control_b.Opcode.BEQ));
-      ret.add(new control_i(x0, trueBlock.name));
-      ret.add(new control_i(x0, falseBlock.name, falseBranchName));
     } else {
       ret.add(new control_i(x0, trueBlock.name));
     }

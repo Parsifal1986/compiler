@@ -303,6 +303,65 @@ public class func {
     dfs(visited, headblock);
   }
 
+  public void refinebranch() {
+    HashSet<block> visited = new HashSet<>();
+    Queue<block> q = new LinkedList<>();
+    q.add(headblock);
+    while (q.size() > 0) {
+      block current = q.poll();
+      if (visited.contains(current)) {
+        continue;
+      }
+      visited.add(current);
+      if (current.next != null && current.next instanceof branch) {
+        branch b = (branch)current.next;
+        if (b.condition != null) {
+          if (b.condition instanceof register) {
+            register r = (register)b.condition;
+            for (int i = current.statements.size() - 1; i >= 0; i--) {
+              statement s = current.statements.get(i);
+              if (s.defVar.contains(r)) {
+                if (s instanceof cmp) {
+                  cmp c = (cmp)s;
+                  asmbranch.Opcode op = null;
+                  switch (c.op) {
+                    case eq:
+                      op = asmbranch.Opcode.BEQ;
+                      break;
+                    case ne:
+                      op = asmbranch.Opcode.BNE;
+                      break;
+                    case slt:
+                      op = asmbranch.Opcode.BLT;
+                      break;
+                    case sgt:
+                      op = asmbranch.Opcode.BGT;
+                      break;
+                    case sle:
+                      op = asmbranch.Opcode.BLE;
+                      break;
+                    case sge:
+                      op = asmbranch.Opcode.BGE;
+                      break;
+                    default:
+                      op = asmbranch.Opcode.BEQ;
+                      break;
+                  }
+                  asmbranch newb = new asmbranch(c.src1, c.src2, b.trueBlock, b.falseBlock, op);
+                  current.next = newb;
+                  current.next.initialize();
+                  current.statements.remove(i);
+                }
+                break;
+              }
+            }
+          }
+        }
+        current.next.next().forEach(q::add);
+      }
+    }
+  }
+
   public void analyze() {
     HashMap<register, Interval> intervalMap = new HashMap<>();
     ArrayList<register> argsReg = new ArrayList<>();

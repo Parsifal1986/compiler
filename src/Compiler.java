@@ -26,6 +26,7 @@ import Tools.IRsema.func;
 import Tools.RISCVsema.section.asmsection;
 import codegen.ASMPrinter;
 import codegen.ASMTranslator;
+import codegen.BranchRefiner;
 import codegen.DCE;
 import codegen.Mem2Reger;
 import codegen.PhiCleaner;
@@ -74,6 +75,8 @@ public class Compiler {
       phiCleaner.cleanPhi();
       Processor processor = new Processor(functions);
       processor.process();
+      BranchRefiner branchRefiner = new BranchRefiner(functions);
+      branchRefiner.refine();
       DCE dce = new DCE(functions);
       dce.Eliminate();
       RegAllocator regAllocator = new RegAllocator(functions);

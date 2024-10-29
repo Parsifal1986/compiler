@@ -29,7 +29,7 @@ public class control_b extends command{
   }
 
   public enum Opcode {
-    BEQ, BNE, BLT, BGE, BLTU, BGEU;
+    BEQ, BNE, BLT, BGE, BLTU, BGEU, BGT, BLE;
 
     @Override
     public String toString() {
@@ -46,6 +46,10 @@ public class control_b extends command{
           return "bltu";
         case BGEU:
           return "bgeu";
+        case BGT:
+          return "bgt";
+        case BLE:
+          return "ble";
         default:
           return null;
       }
