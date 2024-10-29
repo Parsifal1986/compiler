@@ -553,7 +553,8 @@ public class func {
             cnt++;
             phi p = (phi) s;
             current.allPhis.put(p.dst, p);
-            // current.phiCnt.put(p, cnt);
+            current.allPhisInOrder.add(p);
+            current.phiCnt.put(p, cnt);
             current.statements.remove(i);
             i--;
           }
@@ -567,12 +568,14 @@ public class func {
     HashSet<block> hasTmpSet = new HashSet<>();
     for (block b : allBlocks) {
       HashMap<register, register> tmpMap = new HashMap<>();
-      for (phi p : b.allPhis.values()) {
+      for (phi p : b.allPhisInOrder) {
+      // for (phi p : b.allPhis.values()) {
         for (int i = 0; i < p.srcs.size(); i++) {
           block src = labelMap.get(p.labels.get(i));
           if (p.srcs.get(i) instanceof register) {
             register r = (register) p.srcs.get(i);
-            if (b.allPhis.containsKey(r) && b.allPhis.get(r) != p) {
+            // if (b.allPhis.containsKey(r) && b.allPhis.get(r) != p) {
+            if (b.allPhis.containsKey(r) && b.phiCnt.get(b.allPhis.get(r)) < b.phiCnt.get(p)) {
               if (tmpMap.containsKey(r)) {
                 p.srcs.set(i, tmpMap.get(r));
               } else {

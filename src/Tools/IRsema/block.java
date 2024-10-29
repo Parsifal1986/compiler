@@ -21,7 +21,8 @@ public class block {
   public ArrayList<phi> phisInOrder = new ArrayList<>();
   public HashMap<register, phi> phis = new HashMap<>();
   public HashMap<register, phi> allPhis = new HashMap<>();
-  // public HashMap<phi, Integer> phiCnt = new HashMap<>();
+  public ArrayList<phi> allPhisInOrder = new ArrayList<>();
+  public HashMap<phi, Integer> phiCnt = new HashMap<>();
   public HashMap<block, block> tmpBlocks = new HashMap<>();
   public int firstPhi = -1;
 
