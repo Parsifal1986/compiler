@@ -553,7 +553,7 @@ public class func {
             cnt++;
             phi p = (phi) s;
             current.allPhis.put(p.dst, p);
-            current.phiCnt.put(p, cnt);
+            // current.phiCnt.put(p, cnt);
             current.statements.remove(i);
             i--;
           }
