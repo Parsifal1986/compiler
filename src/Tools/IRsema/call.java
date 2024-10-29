@@ -60,7 +60,9 @@ public class call extends statement {
       }
       if (regAlloc.callerSaveRegMap.containsKey(a.regId)) {
         ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg(a.regId), regAlloc.GetVirtReg(regAlloc.callerSaveRegMap.get(a.regId))));
-        callerSavedMap.put(a.regId, regAlloc.callerSaveRegMap.get(a.regId));
+        if (liveVarOut.contains(a)) {
+          callerSavedMap.put(a.regId, regAlloc.callerSaveRegMap.get(a.regId));
+        }
       }
     }
     boolean flag = false;
