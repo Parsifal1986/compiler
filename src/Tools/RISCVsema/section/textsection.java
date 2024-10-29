@@ -20,6 +20,10 @@ public class textsection extends asmsection {
     commands.add(command);
   }
 
+  public void add(Integer index, command command) {
+    commands.add(index, command);
+  }
+
   public void addAll(ArrayList<command> commands) {
     this.commands.addAll(commands);
   }
@@ -34,8 +38,12 @@ public class textsection extends asmsection {
         out.println("." + command.label + ":");
       }
       if (command instanceof ret) {
-        out.println("\tli t0, " + stacksize);
-        out.println("\tadd sp, sp, t0");
+        if (-2048 <= stacksize && stacksize < 2048) {
+          out.println("addi sp, sp, " + stacksize);
+        } else {
+          out.println("li t0, " + stacksize);
+          out.println("add sp, sp, t0");
+        }
       }
       out.println("\t" + command.toString());
     }

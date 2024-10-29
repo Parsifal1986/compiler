@@ -13,6 +13,7 @@ import java.util.Queue;
 import Tools.Entity;
 import Tools.Interval;
 import Tools.domtree;
+import Tools.RISCVsema.arithmetic_i;
 import Tools.RISCVsema.arithmetic_r;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.Pseudoinstruction.li;
@@ -592,8 +593,6 @@ public class func {
     textsection text = new textsection(name, true);
     RegAlloca regAlloca = new RegAlloca();
     text.add(new mv(regAlloca.GetPhyReg("s0"), regAlloca.GetPhyReg("sp")));
-    text.add(new li(regAlloca.GetPhyReg("t0"), null));
-    text.add(new arithmetic_r(regAlloca.GetPhyReg("sp"), regAlloca.GetPhyReg("sp"), regAlloca.GetPhyReg("t0"), arithmetic_r.Opcode.add));
     HashMap<Integer, register> calleeSavedMap = new HashMap<>();
     for (Integer keySet : calleeUsedReg) {
       if (regAlloca.calleeSaveRegMap.containsKey(keySet)) {
@@ -645,7 +644,9 @@ public class func {
             tmp.addAll(tmp.size() - 1, regAlloca.LoadToPhyReg(regAlloca.GetPhyReg(keySet), regAlloca.GetVirtReg(calleeSavedMap.get(keySet))));
           }
         }
-        current.next.next().forEach(q::add);
+        for (int i = current.next.next().size() - 1; i >= 0; i--) {
+          q.add(current.next.next().get(i));
+        }
       } else {
         if (name.equals("main")) {
           tmp.add(new li(regAlloca.GetPhyReg("a0"), new immnum(0)));
@@ -659,7 +660,12 @@ public class func {
       text.addAll(tmp);
     }
     int stacksize = (int)Math.ceil(1.0 * regAlloca.getTotalSpace() / 16) * 16;
-    ((li)text.commands.get(1)).imm = new immnum(0 - stacksize);
+    if (-2048 < stacksize && stacksize <= 2048) {
+      text.add(1, new arithmetic_i(regAlloca.GetPhyReg("sp"), regAlloca.GetPhyReg("sp"), new immnum(-stacksize), arithmetic_i.Opcode.addi));
+    } else {
+      text.add(1, new arithmetic_r(regAlloca.GetPhyReg("sp"), regAlloca.GetPhyReg("sp"), regAlloca.GetPhyReg("t0"), arithmetic_r.Opcode.add));
+      text.add(1, new li(regAlloca.GetPhyReg("t0"), new immnum(-stacksize)));
+    }
     text.stacksize = stacksize;
     return text;
   }
