@@ -9,8 +9,8 @@ import Tools.RISCVsema.command;
 import codegen.RegAlloca;
 
 public class globalvar extends statement {
-  register reg;
-  String type;
+  public register reg;
+  public String type;
 
   public globalvar(register reg, String type) {
     this.reg = reg;

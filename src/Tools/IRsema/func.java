@@ -157,6 +157,36 @@ public class func {
     out.println("}");
   }
 
+  public void global2local(HashMap<register, HashSet<func>> globalSet) {
+    HashSet<block> visited = new HashSet<>();
+    Queue<block> q = new LinkedList<>();
+    q.add(headblock);
+    while (q.size() > 0) {
+      block current = q.poll();
+      if (visited.contains(current)) {
+        continue;
+      }
+      visited.add(current);
+      if (current.statements.size() > 0) {
+        for (statement s : current.statements) {
+          if (s instanceof load) {
+            if (((load)s).addr instanceof register && ((register)((load)s).addr).isGlobal) {
+              globalSet.get((register)((load)s).addr).add(this);
+            }
+          } else if (s instanceof assign) {
+            assign st = (assign)s;
+            if (st.left instanceof register && ((register)st.left).isGlobal) {
+              globalSet.get((register)st.left).add(this);
+            }
+          }
+        }
+      }
+      if (current.next != null) {
+        current.next.next().forEach(q::add);
+      }
+    }
+  }
+
   public void prep() {
     HashSet<block> visited = new HashSet<>();
     if (entry.size() > 0) {

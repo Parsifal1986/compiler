@@ -28,6 +28,7 @@ import codegen.ASMPrinter;
 import codegen.ASMTranslator;
 import codegen.BranchRefiner;
 import codegen.DCE;
+import codegen.Global2Localer;
 import codegen.Mem2Reger;
 import codegen.PhiCleaner;
 import codegen.Processor;
@@ -65,6 +66,8 @@ public class Compiler {
       ArrayList<func> functions = new ArrayList<func>();
       IRbulider irbulider = new IRbulider(gscope, functions, decl);
       irbulider.visit(ASTRoot);
+      Global2Localer global2Localer = new Global2Localer(functions, decl);
+      global2Localer.global2local();
       Mem2Reger mem2Reger = new Mem2Reger(functions);
       mem2Reger.mem2reg();
       Renamer renamer = new Renamer(functions);
