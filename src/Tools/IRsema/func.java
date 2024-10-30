@@ -561,11 +561,6 @@ public class func {
       for (block next : current.next.next()) {
         dfs(visited, next);
       }
-      if (current.next.next().size() == 0) {
-        outBlocks.add(current);
-      }
-    } else {
-      outBlocks.add(current);
     }
     linearOrder.add(current);
   }

@@ -3,7 +3,6 @@ package Tools.IRsema;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_i;
@@ -55,28 +54,25 @@ public class call extends statement {
     register ra = regAlloc.raSaveRegister;
     ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg("ra"), regAlloc.GetVirtReg(ra)));
     HashMap<Integer, register> callerSavedMap = new HashMap<>();
-    HashSet<Integer> hashStored = new HashSet<>();
-    int cnt;
-    for (register a : liveVarOut) {
+    for (register a : liveVarIn) {
       if (callerSavedMap.containsKey(a.regId)) {
         continue;
       }
       if (regAlloc.callerSaveRegMap.containsKey(a.regId)) {
         ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg(a.regId), regAlloc.GetVirtReg(regAlloc.callerSaveRegMap.get(a.regId))));
-        callerSavedMap.put(a.regId, regAlloc.callerSaveRegMap.get(a.regId));
+        if (liveVarOut.contains(a)) {
+          callerSavedMap.put(a.regId, regAlloc.callerSaveRegMap.get(a.regId));
+        }
       }
     }
-    cnt = ret.size();
     boolean flag = false;
     if (args.size() <= 8) {
       for (int i = 0; i < args.size(); i++) {
         Entity whereToLoad = args.get(i);
         if (args.get(i) instanceof register) {
           virtreg reg = regAlloc.GetVirtReg((register)args.get(i));
-          if (reg.regId != -1 && 10 <= reg.regId && reg.regId < i + 10 && !hashStored.contains(reg.regId)) {
-            ret.addAll(cnt, regAlloc.StorePhyReg(regAlloc.GetPhyReg(reg.regId), regAlloc.GetVirtReg(regAlloc.callerSaveRegMap.get(reg.regId))));
+          if (reg.regId != -1 && 10 <= reg.regId && reg.regId < i + 10) {
             whereToLoad = regAlloc.callerSaveRegList.get(reg.regId - 10).virtualReg;
-            hashStored.add(reg.regId);
           }
         }
         ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg("a" + i), whereToLoad));
@@ -87,10 +83,8 @@ public class call extends statement {
         Entity whereToLoad = args.get(i);
         if (args.get(i) instanceof register) {
           virtreg reg = regAlloc.GetVirtReg((register)args.get(i));
-          if (reg.regId != -1 && 10 <= reg.regId && reg.regId < i + 10 && !hashStored.contains(reg.regId)) {
-            ret.addAll(cnt, regAlloc.StorePhyReg(regAlloc.GetPhyReg(reg.regId), regAlloc.GetVirtReg(regAlloc.callerSaveRegMap.get(reg.regId))));
+          if (reg.regId != -1 && 10 <= reg.regId && reg.regId < i + 10) {
             whereToLoad = regAlloc.callerSaveRegList.get(reg.regId - 10).virtualReg;
-            hashStored.add(reg.regId);
           }
         }
         ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg("a" + i), whereToLoad));

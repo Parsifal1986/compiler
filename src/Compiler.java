@@ -43,8 +43,8 @@ public class Compiler {
       // String IRoutput = "test.ll";
       // PrintStream output = new PrintStream(IRoutput);
       String currentFile = System.getProperty("user.dir");
-      // Path filePath = Paths.get(currentFile, "/src/Tools/buildin/builtin.s");
-      Path filePath = Paths.get(currentFile, "../src/Tools/buildin/builtin.s");
+      Path filePath = Paths.get(currentFile, "/src/Tools/buildin/builtin.s");
+      // Path filePath = Paths.get(currentFile, "../src/Tools/buildin/builtin.s");
       InputStream input = System.in;
       PrintStream output = System.out;
       MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
@@ -66,6 +66,8 @@ public class Compiler {
       ArrayList<func> functions = new ArrayList<func>();
       IRbulider irbulider = new IRbulider(gscope, functions, decl);
       irbulider.visit(ASTRoot);
+      Global2Localer global2Localer = new Global2Localer(functions, decl);
+      global2Localer.global2local();
       Mem2Reger mem2Reger = new Mem2Reger(functions);
       mem2Reger.mem2reg();
       Renamer renamer = new Renamer(functions);
