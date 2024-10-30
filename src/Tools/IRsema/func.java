@@ -30,6 +30,7 @@ public class func {
   public String name;
   public String type;
   public ArrayList<register> args;
+  public HashSet<String> argsSet;
   public ArrayList<EntryPair> entry;
   public block headblock;
   public boolean hasCall = false;
@@ -110,6 +111,7 @@ public class func {
     linearOrder = new ArrayList<>();
     outBlocks = new ArrayList<>();
     calleeUsedReg = new HashSet<>();
+    argsSet = new HashSet<>();
   }
 
   public void visit(PrintStream out) {

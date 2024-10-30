@@ -349,6 +349,9 @@ public class IRbulider implements ASTVisitor {
     if (it.funcName.equals("main")) {
       currentBlock.add(new call(globalinit.name, null, "void", new ArrayList<>()));
     }
+    it.parameters.forEach(
+      parameter -> currentFunc.argsSet.add(parameter.name)
+    );
     for (Reflection parameter_regs : it.parameter_regs) {
       currentFunc.entry.add(new func.EntryPair(parameter_regs.ptr, parameter_regs.param.type));
       currentBlock.add(new assign(parameter_regs.ptr, parameter_regs.param));
@@ -441,7 +444,7 @@ public class IRbulider implements ASTVisitor {
   public void visit(IdentifierExprNode it) {
     if (!it.exprType.isfunc) {
       if (currentClass != null) {
-        if (currentClass.members.containsKey(it.Id)) {
+        if (currentClass.members.containsKey(it.Id) && (currentFunc == null || !currentFunc.argsSet.contains(it.Id))) {
           String ptrType = gscope.IRclasses.get(currentClass.name);
           ArrayList<Entity> index = new ArrayList<>();
           index.add(new constant32(0));
@@ -800,7 +803,10 @@ public class IRbulider implements ASTVisitor {
         register oldthisptr = thisptr;
         thisptr = reg;
         suffixContent.expr.get(0).needlvalue = true;
+        func tmp = currentFunc;
+        currentFunc = null;
         suffixContent.accept(this);
+        currentFunc = tmp;
         nowType = suffixContent.expr.get(0).exprType;
         // if (suffixContent.expr.get(0).exprType.isfunc) {
         //   String classname = nowType.getTypename();

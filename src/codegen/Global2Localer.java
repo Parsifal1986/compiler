@@ -26,7 +26,7 @@ public class Global2Localer {
   public void global2local() {
     HashMap<register, String> globalProperty = new HashMap<>();
     HashMap<register, HashSet<func>> globalSet = new HashMap<>();
-    // HashSet<register> discard = new HashSet<>();
+    HashSet<register> discard = new HashSet<>();
     for (statement s : decls.global) {
       if (s instanceof globalvar) {
         globalvar g = (globalvar) s;
@@ -40,12 +40,12 @@ public class Global2Localer {
       functions.global2local(globalSet);
     }
     for (register keySet : globalSet.keySet()) {
-      // if (globalSet.get(keySet).size() == 1) {
-      //   keySet.isGlobal = false;
-      //   Iterator<func> it = globalSet.get(keySet).iterator();
-      //   it.next().entry.add(new func.EntryPair(keySet, globalProperty.get(keySet)));
-      //   discard.add(keySet);
-      // } else {
+      if (globalSet.get(keySet).size() == 1) {
+        keySet.isGlobal = false;
+        Iterator<func> it = globalSet.get(keySet).iterator();
+        it.next().entry.add(new func.EntryPair(keySet, globalProperty.get(keySet)));
+        discard.add(keySet);
+      } else {
         for (func hashSet : globalSet.get(keySet)) {
           if (hashSet.hasCall == false) {
             register local = new register("ptr");
@@ -61,16 +61,16 @@ public class Global2Localer {
             }
           }
         }
-      // }
+      }
     }
-    // for (int i = 0; i < decls.global.size(); i++) {
-    //   if (decls.global.get(i) instanceof globalvar) {
-    //     globalvar g = (globalvar) decls.global.get(i);
-    //     if (discard.contains(g.reg)) {
-    //       decls.global.remove(i);
-    //       i--;
-    //     }
-    //   }
-    // }
+    for (int i = 0; i < decls.global.size(); i++) {
+      if (decls.global.get(i) instanceof globalvar) {
+        globalvar g = (globalvar) decls.global.get(i);
+        if (discard.contains(g.reg)) {
+          decls.global.remove(i);
+          i--;
+        }
+      }
+    }
   }
 }
