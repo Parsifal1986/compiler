@@ -32,11 +32,12 @@ public class func {
   public ArrayList<register> args;
   public ArrayList<EntryPair> entry;
   public block headblock;
+  public boolean hasCall = false;
+  public ArrayList<block> outBlocks;
   HashMap<register, AllocaCite> allocaMap;
   Queue<ReplaceQueueElement> workList;
   HashMap<register, Entity> renameTable;
   ArrayList<block> linearOrder;
-  ArrayList<block> outBlocks;
   HashSet<Integer> calleeUsedReg;
 
   public static class EntryPair {
@@ -178,6 +179,44 @@ public class func {
             assign st = (assign)s;
             if (st.left instanceof register && ((register)st.left).isGlobal) {
               globalSet.get((register)st.left).add(this);
+            }
+          } else if (s instanceof call) {
+            hasCall = true;
+          }
+        }
+      }
+      if (current.next != null) {
+        if (current.next.next().size() == 0) {
+          outBlocks.add(current);
+        }
+        current.next.next().forEach(q::add);
+      } else {
+        outBlocks.add(current);
+      }
+    }
+  }
+
+  public void replaceVar(register old, register newr) {
+    HashSet<block> visited = new HashSet<>();
+    Queue<block> q = new LinkedList<>();
+    q.add(headblock);
+    while (q.size() > 0) {
+      block current = q.poll();
+      if (visited.contains(current)) {
+        continue;
+      }
+      visited.add(current);
+      if (current.statements.size() > 0) {
+        for (statement s : current.statements) {
+          if (s instanceof load) {
+            load l = (load)s;
+            if (l.addr == old) {
+              l.addr = newr;
+            }
+          } else if (s instanceof assign) {
+            assign a = (assign)s;
+            if (a.left == old) {
+              a.left = newr;
             }
           }
         }

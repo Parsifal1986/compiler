@@ -5,9 +5,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import Tools.IRsema.assign;
+import Tools.IRsema.block;
 import Tools.IRsema.declaration;
 import Tools.IRsema.func;
 import Tools.IRsema.globalvar;
+import Tools.IRsema.load;
 import Tools.IRsema.register;
 import Tools.IRsema.statement;
 
@@ -42,6 +45,23 @@ public class Global2Localer {
         Iterator<func> it = globalSet.get(keySet).iterator();
         it.next().entry.add(new func.EntryPair(keySet, globalProperty.get(keySet)));
         discard.add(keySet);
+      } else {
+        for (func hashSet : globalSet.get(keySet)) {
+          if (hashSet.hasCall == false) {
+            register local = new register("ptr");
+            hashSet.entry.add(new func.EntryPair(local, globalProperty.get(keySet)));
+            register tmp1 = new register(globalProperty.get(keySet));
+            hashSet.headblock.add(0, new load(tmp1, keySet));
+            hashSet.headblock.add(0, new assign(local, tmp1));
+            register tmp2 = new register(globalProperty.get(keySet));
+            for (block outBlocks : hashSet.outBlocks) {
+              outBlocks.add(new load(tmp2, local));
+              outBlocks.add(new assign(keySet, tmp2));
+            }
+            hashSet.replaceVar(keySet, local);
+          }
+          hashSet.outBlocks.clear();
+        }
       }
     }
     for (int i = 0; i < decls.global.size(); i++) {

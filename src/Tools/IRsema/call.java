@@ -73,9 +73,10 @@ public class call extends statement {
         Entity whereToLoad = args.get(i);
         if (args.get(i) instanceof register) {
           virtreg reg = regAlloc.GetVirtReg((register)args.get(i));
-          if (reg.regId != -1 && 10 <= reg.regId && reg.regId < i + 10) {
+          if (reg.regId != -1 && 10 <= reg.regId && reg.regId < i + 10 && !hashStored.contains(reg.regId)) {
             ret.addAll(cnt, regAlloc.StorePhyReg(regAlloc.GetPhyReg(reg.regId), regAlloc.GetVirtReg(regAlloc.callerSaveRegMap.get(reg.regId))));
             whereToLoad = regAlloc.callerSaveRegList.get(reg.regId - 10).virtualReg;
+            hashStored.add(reg.regId);
           }
         }
         ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg("a" + i), whereToLoad));

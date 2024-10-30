@@ -66,8 +66,6 @@ public class Compiler {
       ArrayList<func> functions = new ArrayList<func>();
       IRbulider irbulider = new IRbulider(gscope, functions, decl);
       irbulider.visit(ASTRoot);
-      Global2Localer global2Localer = new Global2Localer(functions, decl);
-      global2Localer.global2local();
       Mem2Reger mem2Reger = new Mem2Reger(functions);
       mem2Reger.mem2reg();
       Renamer renamer = new Renamer(functions);
@@ -75,7 +73,7 @@ public class Compiler {
       // IRPrinter irPrinter = new IRPrinter(decl, output, functions);
       // irPrinter.print();
       PhiCleaner phiCleaner = new PhiCleaner(functions);
-      phiCleaner.cleanPhi();
+      phiCleaner.cleanPhi();  
       Processor processor = new Processor(functions);
       processor.process();
       BranchRefiner branchRefiner = new BranchRefiner(functions);
