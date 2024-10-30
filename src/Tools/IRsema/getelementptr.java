@@ -9,6 +9,8 @@ import Tools.RISCVsema.arithmetic_i;
 import Tools.RISCVsema.arithmetic_r;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.memory_i;
+import Tools.RISCVsema.Pseudoinstruction.li;
+import Tools.RISCVsema.Pseudoinstruction.mv;
 import Tools.RISCVsema.operand.immnum;
 import Tools.RISCVsema.operand.phyreg;
 import codegen.RegAlloca;
@@ -51,10 +53,24 @@ public class getelementptr extends statement {
           ret.add(new memory_i(t0, t0, new immnum(0), memory_i.Opcode.LW));
         }
         Entity idx = index.get(i);
-        phyreg idr = regAlloc.GetPhyReg(idx, 1);
-        ret.addAll(regAlloc.LoadToPhyReg(idr, idx));
-        ret.add(new arithmetic_i(t1, idr, new immnum(2), arithmetic_i.Opcode.slli));
-        ret.add(new arithmetic_r(rd, t0, t1, arithmetic_r.Opcode.add));
+        if (idx instanceof constant32) {
+          int offset = ((constant32) idx).value;
+          if (offset != 0) {
+            if (offset * 4 < 2048) {
+              ret.add(new arithmetic_i(rd, t0, new immnum(offset * 4), arithmetic_i.Opcode.addi));
+            } else {
+              ret.add(new li(t1, new immnum(offset * 4)));
+              ret.add(new arithmetic_r(rd, t0, t1, arithmetic_r.Opcode.add));
+            }
+          } else if (rd != t0) {
+            ret.add(new mv(rd, t0));
+          }
+        } else {
+          phyreg idr = regAlloc.GetPhyReg(idx, 1);
+          ret.addAll(regAlloc.LoadToPhyReg(idr, idx));
+          ret.add(new arithmetic_i(t1, idr, new immnum(2), arithmetic_i.Opcode.slli));
+          ret.add(new arithmetic_r(rd, t0, t1, arithmetic_r.Opcode.add));
+        }
       }
     } else {
       for (int i = 1; i < index.size(); i++) {
@@ -62,10 +78,24 @@ public class getelementptr extends statement {
           ret.add(new memory_i(t0, t0, new immnum(0), memory_i.Opcode.LW));
         }
         Entity idx = index.get(i);
-        phyreg idr = regAlloc.GetPhyReg(idx, 1);
-        ret.addAll(regAlloc.LoadToPhyReg(idr, idx));
-        ret.add(new arithmetic_i(t1, idr, new immnum(2), arithmetic_i.Opcode.slli));
-        ret.add(new arithmetic_r(rd, t0, t1, arithmetic_r.Opcode.add));
+        if (idx instanceof constant32) {
+          int offset = ((constant32) idx).value;
+          if (offset != 0) {
+            if (offset * 4 < 2048) {
+              ret.add(new arithmetic_i(rd, t0, new immnum(offset * 4), arithmetic_i.Opcode.addi));
+            } else {
+              ret.add(new li(t1, new immnum(offset * 4)));
+              ret.add(new arithmetic_r(rd, t0, t1, arithmetic_r.Opcode.add));
+            }
+          } else if (rd != t0) {
+            ret.add(new mv(rd, t0));
+          }
+        } else {
+          phyreg idr = regAlloc.GetPhyReg(idx, 1);
+          ret.addAll(regAlloc.LoadToPhyReg(idr, idx));
+          ret.add(new arithmetic_i(t1, idr, new immnum(2), arithmetic_i.Opcode.slli));
+          ret.add(new arithmetic_r(rd, t0, t1, arithmetic_r.Opcode.add));
+        }
       }
     }
     ret.addAll(regAlloc.StorePhyReg(rd, regAlloc.GetVirtReg(reg)));

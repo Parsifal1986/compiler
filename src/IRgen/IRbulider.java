@@ -316,6 +316,7 @@ public class IRbulider implements ASTVisitor {
           init.expr.accept(this);
           String ptrType = gscope.IRclasses.get(it.classname);
           ArrayList<Entity> index = new ArrayList<>();
+          index.add(new constant32(0));
           index.add(new constant32(currentClass.memberoffset.get(init.varname)));
           register newreg = new register("ptr");
           currentBlock.add(new getelementptr(ptrType.equals("i1") ? "i8" : ptrType, newreg, thisptr, index));
