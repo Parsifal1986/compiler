@@ -83,8 +83,9 @@ public class call extends statement {
       for (int i = 0; i < 8; i++) {
         Entity whereToLoad = args.get(i);
         if (args.get(i) instanceof register) {
-          virtreg reg = regAlloc.GetVirtReg((register) args.get(i));
+          virtreg reg = regAlloc.GetVirtReg((register)args.get(i));
           if (reg.regId != -1 && 10 <= reg.regId && reg.regId < i + 10) {
+            ret.addAll(cnt, regAlloc.StorePhyReg(regAlloc.GetPhyReg(reg.regId), regAlloc.GetVirtReg(regAlloc.callerSaveRegMap.get(reg.regId))));
             whereToLoad = regAlloc.callerSaveRegList.get(reg.regId - 10).virtualReg;
           }
         }
