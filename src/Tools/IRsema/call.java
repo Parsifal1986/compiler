@@ -54,17 +54,17 @@ public class call extends statement {
     register ra = regAlloc.raSaveRegister;
     ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg("ra"), regAlloc.GetVirtReg(ra)));
     HashMap<Integer, register> callerSavedMap = new HashMap<>();
-    for (register a : liveVarIn) {
+    int cnt;
+    for (register a : liveVarOut) {
       if (callerSavedMap.containsKey(a.regId)) {
         continue;
       }
       if (regAlloc.callerSaveRegMap.containsKey(a.regId)) {
         ret.addAll(regAlloc.StorePhyReg(regAlloc.GetPhyReg(a.regId), regAlloc.GetVirtReg(regAlloc.callerSaveRegMap.get(a.regId))));
-        if (liveVarOut.contains(a)) {
-          callerSavedMap.put(a.regId, regAlloc.callerSaveRegMap.get(a.regId));
-        }
+        callerSavedMap.put(a.regId, regAlloc.callerSaveRegMap.get(a.regId));
       }
     }
+    cnt = ret.size();
     boolean flag = false;
     if (args.size() <= 8) {
       for (int i = 0; i < args.size(); i++) {
@@ -72,6 +72,7 @@ public class call extends statement {
         if (args.get(i) instanceof register) {
           virtreg reg = regAlloc.GetVirtReg((register)args.get(i));
           if (reg.regId != -1 && 10 <= reg.regId && reg.regId < i + 10) {
+            ret.addAll(cnt, regAlloc.StorePhyReg(regAlloc.GetPhyReg(reg.regId), regAlloc.GetVirtReg(regAlloc.callerSaveRegMap.get(reg.regId))));
             whereToLoad = regAlloc.callerSaveRegList.get(reg.regId - 10).virtualReg;
           }
         }
