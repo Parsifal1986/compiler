@@ -43,8 +43,8 @@ public class Compiler {
       // String IRoutput = "test.ll";
       // PrintStream output = new PrintStream(IRoutput);
       String currentFile = System.getProperty("user.dir");
-      Path filePath = Paths.get(currentFile, "/src/Tools/buildin/builtin.s");
-      // Path filePath = Paths.get(currentFile, "../src/Tools/buildin/builtin.s");
+      // Path filePath = Paths.get(currentFile, "/src/Tools/buildin/builtin.s");
+      Path filePath = Paths.get(currentFile, "../src/Tools/buildin/builtin.s");
       InputStream input = System.in;
       PrintStream output = System.out;
       MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
