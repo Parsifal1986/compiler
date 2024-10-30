@@ -13,6 +13,7 @@ public class Type {
   private int dim;
   public boolean isfunc = false;
   public String funcname = null;
+  public boolean ismember = false;
   public ArrayList<Type> params = null;
 
   public static Type GetType(ConstTypeContext c) {

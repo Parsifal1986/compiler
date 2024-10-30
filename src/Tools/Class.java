@@ -69,6 +69,7 @@ public class Class {
       // throw new SyntaxError("Member " + name + " already exists", pos);
       throw new SyntaxError("Multiple Definitions", pos);
     }
+    type.ismember = true;
     members.put(name, type);
   }
 }

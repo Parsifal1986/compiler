@@ -443,7 +443,7 @@ public class IRbulider implements ASTVisitor {
   @Override
   public void visit(IdentifierExprNode it) {
     if (!it.exprType.isfunc) {
-      if (currentClass != null) {
+      if (currentClass != null && it.exprType.ismember == true) {
         if (currentClass.members.containsKey(it.Id) && (currentFunc == null || !currentFunc.argsSet.contains(it.Id))) {
           String ptrType = gscope.IRclasses.get(currentClass.name);
           ArrayList<Entity> index = new ArrayList<>();
