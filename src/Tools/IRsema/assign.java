@@ -4,6 +4,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.memory_s;
@@ -42,6 +44,16 @@ public class assign extends statement {
       right = renameMap.get(right);
     }
     return;
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    if (right instanceof register) {
+      if (((register) right).isConst) {
+        right = ((register) right).value;
+      }
+    }
+    return new Pair<Boolean, statement> (false, this);
   }
 
   @Override

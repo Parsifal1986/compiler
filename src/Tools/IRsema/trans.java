@@ -4,6 +4,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.operand.phyreg;
@@ -40,6 +42,17 @@ public class trans extends statement {
   @Override
   public void rename(HashMap<register, Entity> renameMap) {
     return;
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    if (src instanceof register) {
+      if (!((register) src).isConst) {
+        dst.isConst = true;
+        dst.value = ((register) src).value;
+      }
+    }
+    return new Pair<Boolean, statement>(false, this);
   }
 
   @Override

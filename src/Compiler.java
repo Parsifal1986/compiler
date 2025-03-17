@@ -28,6 +28,8 @@ import codegen.ASMPrinter;
 import codegen.ASMTranslator;
 import codegen.BranchRefiner;
 import codegen.DCE;
+import codegen.DivOptimizer;
+import codegen.ConstPropagator;
 import codegen.Global2Localer;
 import codegen.Mem2Reger;
 import codegen.PhiCleaner;
@@ -40,11 +42,11 @@ public class Compiler {
     try {
       // String filename = "test.mx";
       // InputStream input = new FileInputStream(filename);
-      // String IRoutput = "test.ll";
+      // String IRoutput = "test.out";
       // PrintStream output = new PrintStream(IRoutput);
       String currentFile = System.getProperty("user.dir");
-      // Path filePath = Paths.get(currentFile, "/src/Tools/buildin/builtin.s");
-      Path filePath = Paths.get(currentFile, "../src/Tools/buildin/builtin.s");
+      Path filePath = Paths.get(currentFile, "/src/Tools/buildin/builtin.s");
+      // Path filePath = Paths.get(currentFile, "../src/Tools/buildin/builtin.s");
       InputStream input = System.in;
       PrintStream output = System.out;
       MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
@@ -72,10 +74,14 @@ public class Compiler {
       mem2Reger.mem2reg();
       Renamer renamer = new Renamer(functions);
       renamer.rename();
+      ConstPropagator constPropagator = new ConstPropagator(functions);
+      constPropagator.propagate();
       // IRPrinter irPrinter = new IRPrinter(decl, output, functions);
       // irPrinter.print();
       PhiCleaner phiCleaner = new PhiCleaner(functions);
       phiCleaner.cleanPhi();  
+      DivOptimizer divOptimizer = new DivOptimizer(functions);
+      divOptimizer.optimize_div();
       Processor processor = new Processor(functions);
       processor.process();
       BranchRefiner branchRefiner = new BranchRefiner(functions);

@@ -8,6 +8,7 @@ public class constant1 extends Entity {
   public constant1(boolean value) {
     super("i1");
     this.value = value;
+    this.isConst = true;
   }
 
   @Override

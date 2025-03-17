@@ -39,10 +39,10 @@ public class textsection extends asmsection {
       }
       if (command instanceof ret) {
         if (-2048 <= stacksize && stacksize < 2048) {
-          out.println("addi sp, sp, " + stacksize);
+          out.println("  addi sp, sp, " + stacksize);
         } else {
-          out.println("li t0, " + stacksize);
-          out.println("add sp, sp, t0");
+          out.println("  li t0, " + stacksize);
+          out.println("  add sp, sp, t0");
         }
       }
       out.println("\t" + command.toString());

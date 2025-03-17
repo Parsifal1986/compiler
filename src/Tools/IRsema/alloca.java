@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import Tools.Pair;
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_i;
 import Tools.RISCVsema.arithmetic_r;
@@ -52,6 +53,11 @@ public class alloca extends statement {
       ret.add(new memory_s(sp, target, new immnum(ptr.getStackPos()), memory_s.Opcode.SW));
     }
     return ret;
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    return new Pair<Boolean, statement>(false, this);
   }
 
   @Override

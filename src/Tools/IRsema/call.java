@@ -4,6 +4,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_i;
 import Tools.RISCVsema.arithmetic_r;
@@ -123,6 +125,18 @@ public class call extends statement {
     }
     ret.addAll(regAlloc.LoadToPhyReg(regAlloc.GetPhyReg("ra"), regAlloc.GetVirtReg(ra)));
     return ret;
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    for (int i = 0; i < args.size(); i++) {
+      if (args.get(i) instanceof register) {
+        if (((register)args.get(i)).isConst) {
+          args.set(i, ((register)args.get(i)).value);
+        }
+      }
+    }
+    return new Pair<Boolean, statement>(false, this);
   }
 
   @Override

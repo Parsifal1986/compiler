@@ -4,6 +4,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_i;
 import Tools.RISCVsema.arithmetic_r;
@@ -210,6 +212,66 @@ public class cmp extends statement {
     }
     ret.addAll(regAlloc.StorePhyReg(r0, regAlloc.GetVirtReg(dest)));
     return ret;
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    if (src1 instanceof register && ((register) src1).isConst) {
+      src1 = ((register) src1).value;
+    }
+    if (src2 instanceof register && ((register) src2).isConst) {
+      src2 = ((register) src2).value;
+    }
+    if (src1.isConst && src2.isConst) {
+      Entity op1, op2;
+      op1 = src1;
+      op2 = src2;
+      dest.isConst = true;
+      switch (op) {
+        case eq:{
+          if (op1 instanceof constant32 && op2 instanceof constant32) {
+            dest.value = new constant1(((constant32) op1).value == ((constant32) op2).value);
+          } else if (op1 instanceof constant1 && op2 instanceof constant1) {
+            dest.value = new constant1(((constant1) op1).value == ((constant1) op2).value);
+          }
+          break;
+        }
+        case ne:{
+          if (op1 instanceof constant32 && op2 instanceof constant32) {
+            dest.value = new constant1(((constant32) op1).value != ((constant32) op2).value);
+          } else if (op1 instanceof constant1 && op2 instanceof constant1) {
+            dest.value = new constant1(((constant1) op1).value != ((constant1) op2).value);
+          }
+          break;
+        }
+        case slt:{
+          if (op1 instanceof constant32 && op2 instanceof constant32) {
+            dest.value = new constant1(((constant32) op1).value < ((constant32) op2).value);
+          }
+          break;
+        }
+        case sgt:{
+          if (op1 instanceof constant32 && op2 instanceof constant32) {
+            dest.value = new constant1(((constant32) op1).value > ((constant32) op2).value);
+          }
+          break;
+        }
+        case sle:{
+          if (op1 instanceof constant32 && op2 instanceof constant32) {
+            dest.value = new constant1(((constant32) op1).value <= ((constant32) op2).value);
+          }
+          break;
+        }
+        case sge:{
+          if (op1 instanceof constant32 && op2 instanceof constant32) {
+            dest.value = new constant1(((constant32) op1).value >= ((constant32) op2).value);
+          }
+          break;
+        }
+      }
+      return new Pair<Boolean, statement>(true, null);
+    }
+    return new Pair<Boolean, statement>(false, this);
   }
 
   @Override

@@ -4,6 +4,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_i;
 import Tools.RISCVsema.arithmetic_r;
@@ -102,6 +104,18 @@ public class getelementptr extends statement {
     return ret;
   }
 
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    for (int i = 0; i < index.size(); i++) {
+      if (index.get(i) instanceof register) {
+        if (((register) index.get(i)).isConst) {
+          index.set(i, ((register) index.get(i)).value);
+        }
+      }
+    }
+    return new Pair<Boolean, statement>(false, this);
+  }
+  
   @Override
   public void rename(HashMap<register, Entity> renameMap) {
     if (renameMap.containsKey(ptr)) {

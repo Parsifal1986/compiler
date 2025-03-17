@@ -4,6 +4,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.command;
 import codegen.RegAlloca;
@@ -47,6 +49,16 @@ public class ret extends control {
       }
     }
     return;
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    if (retVal instanceof register) {
+      if (((register) retVal).isConst) {
+        retVal = ((register) retVal).value;
+      }
+    }
+    return new Pair<Boolean, statement>(false, this);
   }
 
   @Override

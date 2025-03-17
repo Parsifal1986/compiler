@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.control_b;
@@ -88,6 +90,11 @@ public class asmbranch extends control {
 
   @Override
   public void rename(HashMap<register, Entity> renameMap) {
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    return new Pair<Boolean, statement> (false, this);
   }
   
   @Override

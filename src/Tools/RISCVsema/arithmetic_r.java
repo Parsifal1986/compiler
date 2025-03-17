@@ -29,7 +29,7 @@ public class arithmetic_r extends command {
   }
 
   public enum Opcode {
-    add, sub, sll, slt, sltu, xor, srl, sra, or, and, rem, div, mul;
+    add, sub, sll, slt, sltu, xor, srl, sra, or, and, rem, div, mul, mulhsu;
 
     public String toString() {
       switch (this) {
@@ -59,6 +59,8 @@ public class arithmetic_r extends command {
           return "div";
         case mul:
           return "mul";
+        case mulhsu:
+          return "mulhsu";
         default:
           return null;
       }

@@ -12,6 +12,7 @@ public class register extends Entity {
   static int avarcounter = 0;
   public int regId = -1;
   public Interval interval;
+  public Entity value;
 
   public register(String type) {
     super(type);

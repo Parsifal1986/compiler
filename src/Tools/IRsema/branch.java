@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import Tools.Pair;
 import Tools.Entity;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.control_b;
@@ -74,6 +75,35 @@ public class branch extends control {
       ret.add(new control_i(x0, trueBlock.name));
     }
     return ret;
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    if (condition != null && condition.isConst) {
+      if (condition instanceof register) {
+        if (((register)condition).isConst) {
+          condition = ((register) condition).value;
+        }
+      }
+      if (condition instanceof constant1) {
+        if (((constant1) condition).value) {
+          this.condition = null;
+        } else {
+          this.condition = null;
+          this.trueBlock = falseBlock;
+        }
+      } else if (condition instanceof constant32) {
+        if (((constant32) condition).value != 0) {
+          this.condition = null;
+        } else {
+          this.condition = null;
+          this.trueBlock = falseBlock;
+        }
+      }
+      return new Pair<Boolean, statement>(true, this);
+    } else {
+      return new Pair<Boolean, statement>(false, this);
+    }
   }
 
   @Override

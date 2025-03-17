@@ -11,6 +11,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.TreeSet;
 
+import Tools.Pair;
 import Tools.Entity;
 import Tools.Interval;
 import Tools.domtree;
@@ -80,6 +81,13 @@ public class func {
       this.id = id;
       this.reg = reg;
     }
+  }
+
+  public static double log2(double x) {
+    if (x <= 0) {
+      throw new IllegalArgumentException("Input must be greater than 0");
+    }
+    return Math.log(x) / Math.log(2);
   }
 
   public static class ReplaceQueueElement {
@@ -660,6 +668,146 @@ public class func {
         }
         next.pre.remove(srcBlock);
         next.pre.add(values);
+      }
+    }
+  }
+
+  public void propagate() {
+    boolean flag = true;
+    HashMap<String, block> labelMap = new HashMap<>();
+    HashSet<block> visited = new HashSet<>();
+    Queue<block> q = new LinkedList<>();
+    labelMap.put(headblock.name, headblock);
+    q.add(headblock);
+    while (q.size() > 0) {
+      block current = q.poll();
+      if (visited.contains(current)) {
+        continue;
+      }
+      visited.add(current);
+      labelMap.put(current.name, current);
+      if (current.next != null) {
+        current.next.next().forEach(q::add);
+      }
+    }
+    while (flag) {
+      flag = false;
+      q = new LinkedList<>();
+      visited = new HashSet<>();
+      q.add(headblock);
+      while (q.size() > 0) {
+        block current = q.poll();
+        if (visited.contains(current)) {
+          continue;
+        }
+        visited.add(current);
+        if (current.statements.size() > 0) {
+          for (int i = 0; i < current.statements.size(); i++) {
+            statement s = current.statements.get(i);
+            if (s instanceof phi) {
+              phi p = (phi)s;
+              for (int j = 0; j < p.labels.size(); j++) {
+                if (!labelMap.containsKey(p.labels.get(j))) {
+                  p.srcs.remove(j);
+                  p.labels.remove(j);
+                  j--;
+                }
+              }
+            }
+            Pair<Boolean, statement> p = s.propagate();
+            if (p.getKey()) {
+              flag = true;
+              if (p.getValue() == null) {
+                current.statements.remove(i);
+                i--;
+              } else {
+                current.statements.set(i, p.getValue());
+              }
+            }
+          }
+        }
+        if (current.next != null) {
+          Pair<Boolean, statement> p = current.next.propagate();
+          if (p.getKey()) {
+            flag = true;
+            current.next = (control)p.getValue();
+          }
+          current.next.next().forEach(q::add);
+        }
+      }
+      labelMap = new HashMap<>();
+      for (block b : visited) {
+        labelMap.put(b.name, b);
+      }
+    }
+  }
+
+  public void optimize_div() {
+    HashSet<block> visited = new HashSet<>();
+    Queue<block> q = new LinkedList<>();
+    q.add(headblock);
+    while (q.size() > 0) {
+      block current = q.poll();
+      if (visited.contains(current)) {
+        continue;
+      }
+      visited.add(current);
+      if (current.statements.size() > 0) {
+        for (int i = 0; i < current.statements.size(); i++) {
+          statement s = current.statements.get(i);
+          if (s instanceof binary && ((binary)s).op == binary.opcode.sdiv) {
+            binary b = (binary)s;
+            boolean flag = false;
+            if (b.rhs instanceof constant32) {
+              boolean neg = false;
+              int val = ((constant32)b.rhs).value;
+              if (val < 0) {
+                val = -val;
+                neg = true;
+              }
+              int sradd = Integer.numberOfTrailingZeros(val);
+              val = val >> sradd;
+              register tmpres = new register("i32");
+              for (int l = 0; l < (int) Math.ceil(log2(val)); l++) {
+                double m = Math.floor(((1L << (l + 32)) + (1L << l)) / val);
+                if (m >= (double)(1L << (32 + l)) / val) {
+                  register tmp = new register("i32");
+                  current.statements.set(i, new binary(binary.opcode.mulhsu, b.lhs, new constant32((int)(long)(m)), tmp));
+                  current.statements.add(i + 1, new binary(binary.opcode.ashr, tmp, new constant32(l + sradd), tmpres));
+                  flag = true;
+                  i = i + 1;
+                  break;
+                }
+              }
+              if (!flag) {
+                int l = (int) Math.ceil(log2(val));
+                double m = Math.floor(((1L << (l + 32)) + (1L << l)) / val);
+                register tmp1 = new register("i32"), tmp2 = new register("i32"), tmp3 = new register("i32"), tmp4 = new register("i32");
+                current.statements.set(i, new binary(binary.opcode.mulhsu, b.lhs, new constant32((int)((long)m - (1L << 32))), tmp1));
+                current.statements.add(i + 1, new binary(binary.opcode.sub, b.lhs, tmp1, tmp2));
+                current.statements.add(i + 2, new binary(binary.opcode.ashr, tmp2, new constant32(1), tmp3));
+                current.statements.add(i + 3, new binary(binary.opcode.add, tmp3, tmp1, tmp4));
+                current.statements.add(i + 4, new binary(binary.opcode.ashr, tmp4, new constant32(l + sradd - 1), tmpres));
+                i = i + 4;
+              }
+              register tmpres2;
+              if (neg) {
+                tmpres2 = new register("i32");
+                current.statements.add(i + 1, new binary(binary.opcode.sub, new constant32(0), tmpres, tmpres2));
+                i = i + 1;
+              } else {
+                tmpres2 = tmpres;
+              }
+              register tmp = new register("i32");
+              current.statements.add(i + 1, new cmp(tmp, tmpres2, new constant32(0), cmp.opcode.slt));
+              current.statements.add(i + 2, new binary(binary.opcode.add, tmpres2, tmp, b.result));
+              i = i + 2;
+            }
+          }
+        }
+      }
+      if (current.next != null) {
+        current.next.next().forEach(q::add);
       }
     }
   }

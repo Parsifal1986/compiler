@@ -8,6 +8,7 @@ public class constant32 extends Entity {
   public constant32(int value) {
     super("i32");
     this.value = value;
+    this.isConst = true;
   }
 
   @Override

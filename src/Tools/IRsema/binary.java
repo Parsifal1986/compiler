@@ -4,6 +4,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.arithmetic_i;
 import Tools.RISCVsema.arithmetic_r;
@@ -32,7 +34,7 @@ public class binary extends statement {
   }
   
   public enum opcode {
-    add, sub, mul, sdiv, srem, shl, ashr, and, or, xor
+    add, sub, mul, sdiv, srem, shl, ashr, and, or, xor, mulhsu
   }
 
   @Override
@@ -238,6 +240,10 @@ public class binary extends statement {
             ret.add(new arithmetic_r(r0, r1, r2, arithmetic_r.Opcode.xor));
           }
           break;
+        case mulhsu:
+          ret.addAll(regAlloc.LoadToPhyReg(r2, rhs));
+          ret.add(new arithmetic_r(r0, r1, r2, arithmetic_r.Opcode.mulhsu));
+          break;
         default:
           break;
       }
@@ -282,7 +288,7 @@ public class binary extends statement {
     ret.addAll(regAlloc.StorePhyReg(r0, regAlloc.GetVirtReg(result)));
     return ret;
   }
-
+  
   @Override
   public void rename(HashMap<register, Entity> renameMap) {
     if (renameMap.containsKey(lhs)) {
@@ -290,6 +296,95 @@ public class binary extends statement {
     }
     if (renameMap.containsKey(rhs)) {
       rhs = renameMap.get(rhs);
+    }
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    if (lhs instanceof register && ((register) lhs).isConst) {
+      lhs = ((register) lhs).value;
+    }
+    if (rhs instanceof register && ((register) rhs).isConst) {
+      rhs = ((register) rhs).value;
+    }
+    if (lhs.isConst && rhs.isConst) {
+      Entity op1 = lhs, op2 = rhs;
+      switch (op) {
+        case add: {
+          result.isConst = true;
+          result.value = new constant32(((constant32)op1).value + ((constant32)op2).value);
+          break;
+        }
+        case sub: {
+          result.isConst = true;
+          result.value = new constant32(((constant32)op1).value - ((constant32)op2).value);
+          break;
+        }
+        case mul: {
+          result.isConst = true;
+          result.value = new constant32(((constant32)op1).value * ((constant32)op2).value);
+          break;
+        }
+        case sdiv: {
+          if (((constant32)op2).value != 0) {
+            result.isConst = true;
+            result.value = new constant32(((constant32)op1).value / ((constant32)op2).value);
+          } else {
+            return new Pair<Boolean, statement> (false, this);
+          }
+          break;
+        }
+        case srem: {
+          result.isConst = true;
+          result.value = new constant32(((constant32)op1).value % ((constant32)op2).value);
+          break;
+        }
+        case shl: {
+          result.isConst = true;
+          result.value = new constant32(((constant32)op1).value << ((constant32)op2).value);
+          break;
+        }
+        case ashr: {
+          result.isConst = true;
+          result.value = new constant32(((constant32)op1).value >> ((constant32)op2).value);
+          break;
+        }
+        case and: {
+          if (op1 instanceof constant32 && op2 instanceof constant32) {
+            result.isConst = true;
+            result.value = new constant32(((constant32)op1).value & ((constant32)op2).value);
+          } else if (op1 instanceof constant1 && op2 instanceof constant1) {
+            result.isConst = true;
+            result.value = new constant1(((constant1)op1).value & ((constant1)op2).value);
+          }
+          break;
+        }
+        case or: {
+          if (op1 instanceof constant32 && op2 instanceof constant32) {
+            result.isConst = true;
+            result.value = new constant32(((constant32)op1).value | ((constant32)op2).value);
+          } else if (op1 instanceof constant1 && op2 instanceof constant1) {
+            result.isConst = true;
+            result.value = new constant1(((constant1)op1).value | ((constant1)op2).value);
+          }
+          break;
+        }
+        case xor: {
+          if (op1 instanceof constant32 && op2 instanceof constant32) {
+            result.isConst = true;
+            result.value = new constant32(((constant32)op1).value ^ ((constant32)op2).value);
+          } else if (op1 instanceof constant1 && op2 instanceof constant1) {
+            result.isConst = true;
+            result.value = new constant1(((constant1)op1).value ^ ((constant1)op2).value);
+          }
+          break;
+        }
+        default:
+          break;
+      }
+      return new Pair<Boolean, statement> (true, null);
+    } else {
+      return new Pair<Boolean, statement> (false, this);
     }
   }
 

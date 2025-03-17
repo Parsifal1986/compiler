@@ -4,6 +4,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.command;
 import Tools.RISCVsema.operand.phyreg;
@@ -30,6 +32,11 @@ public class let extends statement {
     ret.addAll(regAlloc.LoadToPhyReg(rd, rhs));
     ret.addAll(regAlloc.StorePhyReg(rd, regAlloc.GetVirtReg(lhs)));
     return ret;
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    return new Pair<Boolean, statement>(false, this);
   }
 
   @Override

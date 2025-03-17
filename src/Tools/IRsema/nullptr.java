@@ -5,6 +5,7 @@ import Tools.Entity;
 public class nullptr extends Entity {
   public nullptr() {
     super("ptr");
+    this.isConst = true;
   }
 
   @Override

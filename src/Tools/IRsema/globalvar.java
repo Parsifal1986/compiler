@@ -4,6 +4,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.command;
 import codegen.RegAlloca;
@@ -20,6 +22,11 @@ public class globalvar extends statement {
   @Override
   public void print(PrintStream out) {
     out.println(reg.tostring() + " = global " + type + " zeroinitializer");
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    return new Pair<Boolean, statement> (false, this);
   }
 
   @Override

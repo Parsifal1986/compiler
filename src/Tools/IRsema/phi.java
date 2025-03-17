@@ -4,6 +4,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.command;
 import codegen.RegAlloca;
@@ -44,6 +46,30 @@ public class phi extends statement {
       }
     }
     return;
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    if (srcs.size() == 1) {
+      if (srcs.get(0) instanceof register) {
+        if (((register) srcs.get(0)).isConst) {
+          dst.isConst = true;
+          dst.value = ((register)srcs.get(0)).value;
+        }
+      } else {
+        dst.isConst = true;
+        dst.value = srcs.get(0);
+      }
+      return new Pair<Boolean, statement>(true, null);
+    }
+    for (int i = 0; i < srcs.size(); i++) {
+      if (srcs.get(i) instanceof register) {
+        if (((register) srcs.get(i)).isConst) {
+          srcs.set(i, ((register) srcs.get(i)).value);
+        }
+      }
+    }
+    return new Pair<Boolean, statement>(false, this);
   }
 
   @Override

@@ -4,6 +4,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.command;
 import codegen.RegAlloca;
@@ -34,6 +36,11 @@ public class stringconst extends statement {
   @Override
   public void rename(HashMap<register, Entity> renameMap) {
     return;
+  }
+
+  @Override
+  public Pair<Boolean, statement> propagate() {
+    return new Pair<Boolean, statement> (false, this);
   }
 
   @Override

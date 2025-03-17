@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import Tools.Pair;
+
 import Tools.Entity;
 import Tools.RISCVsema.command;
 import codegen.RegAlloca;
@@ -41,4 +43,6 @@ abstract public class statement {
   abstract public void rename(HashMap<register, Entity> renameMap);
 
   abstract public void initialize();
+
+  abstract public Pair<Boolean, statement> propagate();
 }
