@@ -11,7 +11,7 @@ public class Renamer {
     this.functions = functions;
   }
   
-  public void rename() {
+  public void Rename() {
     for (func functions : functions) {
       functions.rename();
     }

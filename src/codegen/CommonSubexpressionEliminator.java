@@ -4,16 +4,16 @@ import java.util.ArrayList;
 
 import Tools.IRsema.func;
 
-public class DCE {
+public class CommonSubexpressionEliminator {
   private ArrayList<func> functions;
 
-  public DCE(ArrayList<func> functions) {
+  public CommonSubexpressionEliminator(ArrayList<func> functions) {
     this.functions = functions;
   }
-  
-  public void Eliminate() {
+
+  public void CS_Elimination() {
     for (func functions : functions) {
-      functions.dce();
+      functions.cs_elimination();
     }
   }
 }

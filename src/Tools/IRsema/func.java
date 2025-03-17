@@ -206,7 +206,7 @@ public class func {
     }
   }
 
-  public void replaceVar(register old, register newr) {
+  public void replace_var(register old, register newr) {
     HashSet<block> visited = new HashSet<>();
     Queue<block> q = new LinkedList<>();
     q.add(headblock);
@@ -383,7 +383,7 @@ public class func {
     dfs(visited, headblock);
   }
 
-  public void refinebranch() {
+  public void refine_branch() {
     HashSet<block> visited = new HashSet<>();
     Queue<block> q = new LinkedList<>();
     q.add(headblock);
@@ -575,7 +575,7 @@ public class func {
     linearOrder.add(current);
   }
   
-  public void cleanPhi() {
+  public void clean_phi() {
     HashMap<String, block> labelMap = new HashMap<>();
     Queue<block> q = new LinkedList<block>();
     ArrayList<block> allBlocks = new ArrayList<>();
@@ -672,7 +672,7 @@ public class func {
     }
   }
 
-  public void propagate() {
+  public void scc_propagate() {
     boolean flag = true;
     HashMap<String, block> labelMap = new HashMap<>();
     HashSet<block> visited = new HashSet<>();
@@ -738,6 +738,34 @@ public class func {
       labelMap = new HashMap<>();
       for (block b : visited) {
         labelMap.put(b.name, b);
+      }
+    }
+  }
+
+  public void cs_elimination() {
+    HashSet<block> visited = new HashSet<>();
+    Queue<block> q = new LinkedList<>();
+    q.add(headblock);
+    while (q.size() > 0) {
+      block current = q.poll();
+      if (visited.contains(current)) {
+        continue;
+      }
+      visited.add(current);
+      if (current.statements.size() > 0) {
+        for (int i = 0; i < current.statements.size(); i++) {
+          statement s = current.statements.get(i);
+          if (s instanceof assign) {
+            assign a = (assign)s;
+            if (a.left == a.right) {
+              current.statements.remove(i);
+              i--;
+            }
+          }
+        }
+      }
+      if (current.next != null) {
+        current.next.next().forEach(q::add);
       }
     }
   }
@@ -812,7 +840,7 @@ public class func {
     }
   }
 
-  public void dce() {
+  public void dc_elimination() {
     HashSet<register> haveChecked = new HashSet<>();
     Queue<register> toBeLive = new LinkedList<>();
     HashMap<register, ArrayList<statement>> defMap = new HashMap<>();
@@ -887,7 +915,7 @@ public class func {
     }
   }
 
-  public asmsection trans() {
+  public asmsection trans_to_asm() {
     textsection text = new textsection(name, true);
     RegAlloca regAlloca = new RegAlloca();
     text.add(new mv(regAlloca.GetPhyReg("s0"), regAlloca.GetPhyReg("sp")));

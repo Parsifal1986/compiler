@@ -11,7 +11,7 @@ public class Processor {
     this.functions = functions;
   }
   
-  public void process() {
+  public void Process() {
     for (func functions : functions) {
       functions.process();
     }

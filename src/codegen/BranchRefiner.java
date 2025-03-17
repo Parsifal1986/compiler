@@ -11,9 +11,9 @@ public class BranchRefiner {
     this.functions = functions;
   }
   
-  public void refine() {
+  public void Refine() {
     for (func functions : functions) {
-      functions.refinebranch();
+      functions.refine_branch();
     }
   }
 }

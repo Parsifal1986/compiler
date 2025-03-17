@@ -23,7 +23,7 @@ public class Global2Localer {
     this.decls = decls;
   }
   
-  public void global2local() {
+  public void ToLocal() {
     HashMap<register, String> globalProperty = new HashMap<>();
     HashMap<register, HashSet<func>> globalSet = new HashMap<>();
     HashSet<register> discard = new HashSet<>();
@@ -50,7 +50,7 @@ public class Global2Localer {
           if (hashSet.hasCall == false) {
             register local = new register("ptr");
             hashSet.entry.add(new func.EntryPair(local, globalProperty.get(keySet)));
-            hashSet.replaceVar(keySet, local);
+            hashSet.replace_var(keySet, local);
             register tmp1 = new register(globalProperty.get(keySet));
             hashSet.headblock.add(0, new assign(local, tmp1));
             hashSet.headblock.add(0, new load(tmp1, keySet));

@@ -11,9 +11,9 @@ public class PhiCleaner {
     this.functions = functions;
   }
   
-  public void cleanPhi() {
+  public void CleanPhi() {
     for (func functions : functions) {
-      functions.cleanPhi();
+      functions.clean_phi();
     }
   }
 }

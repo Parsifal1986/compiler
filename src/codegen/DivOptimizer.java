@@ -11,7 +11,7 @@ public class DivOptimizer {
     this.functions = functions;
   }
 
-  public void optimize_div() {
+  public void OptimizeDiv() {
     for (func functions : functions) {
       functions.optimize_div();
     }

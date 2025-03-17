@@ -11,7 +11,7 @@ public class Mem2Reger {
     this.functions = functions;
   }
   
-  public void mem2reg() {
+  public void ToReg() {
     for (func functions : functions) {
       functions.prep();
       functions.mem2reg();

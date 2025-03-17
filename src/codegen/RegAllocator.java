@@ -11,7 +11,7 @@ public class RegAllocator {
     this.functons = functons;
   }
 
-  public void alloc() {
+  public void Alloc() {
     for (func functons : functons) {
       functons.analyze();
     }
